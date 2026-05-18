@@ -14,6 +14,7 @@ import {
   Chip,
 } from '@mui/material';
 import { useBirdStore, useAuth, useSightings } from '@sisio/shared';
+import { ARViewer } from '../components/ARViewer';
 
 export const BirdResultPage: React.FC = () => {
   const navigate = useNavigate();
@@ -88,6 +89,13 @@ export const BirdResultPage: React.FC = () => {
             {Math.round(confidence * 100)}%
           </Typography>
         </Box>
+      </Paper>
+
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+          🎯 Visualizador 3D Interactivo
+        </Typography>
+        <ARViewer bird={bird} />
       </Paper>
 
       <Stack spacing={2} sx={{ mb: 3 }}>
