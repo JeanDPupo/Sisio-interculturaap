@@ -1,0 +1,36 @@
+{
+  "name": "@sisio/web",
+  "version": "0.1.0",
+  "description": "Sisio web app - React PWA",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "@mui/material": "^5.14.0",
+    "@mui/icons-material": "^5.14.0",
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "leaflet": "^1.9.0",
+    "react-leaflet": "^4.2.0",
+    "@sisio/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/leaflet": "^1.9.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "vite": "^5.0.0",
+    "vite-plugin-pwa": "^0.17.0",
+    "eslint": "^8.56.0"
+  }
+}

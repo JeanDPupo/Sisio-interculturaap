@@ -1,0 +1,1 @@
+- [Estado del Proyecto](proyecto_status.md) — Backend 70% done, Mobile placeholders, Web vacío, Shared hooks faltantes

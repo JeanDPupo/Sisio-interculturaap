@@ -1,0 +1,74 @@
+{
+  "name": "Sisio - Preservación del Conocimiento Ancestral",
+  "short_name": "Sisio",
+  "description": "Conoce y preserva el conocimiento ancestral sobre las aves de tu territorio",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#2196F3",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/logo.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Identificar Ave",
+      "short_name": "Identificar",
+      "description": "Identifica un ave por foto o sonido",
+      "url": "/identify",
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Mis Avistamientos",
+      "short_name": "Avistamientos",
+      "description": "Ver mis avistamientos registrados",
+      "url": "/sightings",
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

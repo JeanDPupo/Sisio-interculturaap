@@ -1,0 +1,145 @@
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuthStore, useOfflineStore } from '@sisio/shared';
+
+// Screens (placeholders for now)
+const SplashScreen = () => <div>Splash Screen</div>;
+const HomeScreen = () => <div>Home Screen</div>;
+const PhotoCaptureScreen = () => <div>Photo Capture</div>;
+const AudioCaptureScreen = () => <div>Audio Capture</div>;
+const BirdResultScreen = () => <div>Bird Result</div>;
+const SightingsScreen = () => <div>Sightings</div>;
+const MapScreen = () => <div>Map</div>;
+const ProfileScreen = () => <div>Profile</div>;
+const SettingsScreen = () => <div>Settings</div>;
+const LoginScreen = () => <div>Login</div>;
+const OnboardingScreen = () => <div>Onboarding</div>;
+
+const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
+
+const HomeStackNavigator = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <Stack.Screen name="HomeTab" component={HomeScreen} />
+    <Stack.Screen name="PhotoCapture" component={PhotoCaptureScreen} />
+    <Stack.Screen name="AudioCapture" component={AudioCaptureScreen} />
+    <Stack.Screen name="BirdResult" component={BirdResultScreen} />
+  </Stack.Navigator>
+);
+
+const SightingsStackNavigator = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <Stack.Screen name="SightingsTab" component={SightingsScreen} />
+    <Stack.Screen name="BirdDetail" component={BirdResultScreen} />
+  </Stack.Navigator>
+);
+
+const MainTabNavigator = () => (
+  <Tab.Navigator
+    screenOptions={({ route }) => ({
+      tabBarIcon: ({ focused, color, size }) => {
+        let iconName: any;
+
+        if (route.name === 'Home') {
+          iconName = focused ? 'home' : 'home-outline';
+        } else if (route.name === 'Sightings') {
+          iconName = focused ? 'list' : 'list-outline';
+        } else if (route.name === 'Map') {
+          iconName = focused ? 'map' : 'map-outline';
+        } else if (route.name === 'Profile') {
+          iconName = focused ? 'person' : 'person-outline';
+        }
+
+        return <Ionicons name={iconName} size={size} color={color} />;
+      },
+      tabBarActiveTintColor: '#2196F3',
+      tabBarInactiveTintColor: 'gray',
+      headerShown: false,
+    })}
+  >
+    <Tab.Screen
+      name="Home"
+      component={HomeStackNavigator}
+      options={{ title: 'Inicio' }}
+    />
+    <Tab.Screen
+      name="Sightings"
+      component={SightingsStackNavigator}
+      options={{ title: 'Avistamientos' }}
+    />
+    <Tab.Screen
+      name="Map"
+      component={MapScreen}
+      options={{ title: 'Mapa' }}
+    />
+    <Tab.Screen
+      name="Profile"
+      component={ProfileScreen}
+      options={{ title: 'Perfil' }}
+    />
+  </Tab.Navigator>
+);
+
+export default function App() {
+  const { user, isGuest, isAuthenticated } = useAuthStore();
+  const { isOnline } = useOfflineStore();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Initialize app
+    const initializeApp = async () => {
+      // Check if user is logged in
+      // Load user profile if available
+      setLoading(false);
+    };
+
+    initializeApp();
+  }, []);
+
+  if (loading) {
+    return <SplashScreen />;
+  }
+
+  // Show onboarding if not authenticated and not a guest
+  if (!isAuthenticated && !isGuest) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Main" component={MainTabNavigator} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!isAuthenticated && isGuest ? (
+          <>
+            <Stack.Screen name="Main" component={MainTabNavigator} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Main" component={MainTabNavigator} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}

@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Sisio",
+    "slug": "sisio",
+    "version": "0.1.0",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTabletMode": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "La app necesita acceso a tu cámara para fotografiar aves",
+        "NSMicrophoneUsageDescription": "La app necesita acceso a tu micrófono para grabar el canto de las aves",
+        "NSLocationWhenInUseUsageDescription": "La app necesita tu ubicación para registrar dónde viste el ave"
+      }
+    },
+    "android": {
+      "package": "com.sisio.app",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "La app necesita acceso a tu cámara para fotografiar aves."
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "audioPermission": "La app necesita acceso a tu micrófono para grabar el canto de las aves.",
+          "microphonePermission": "La app necesita acceso a tu micrófono para grabar el canto de las aves."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysPermission": "La app necesita tu ubicación.",
+          "locationWhenInUsePermission": "La app necesita tu ubicación para registrar dónde viste el ave."
+        }
+      ]
+    ]
+  }
+}
