@@ -50,6 +50,7 @@ async def register(user_data: UserCreate):
             "id": user_id,
             "email": user_data.email,
             "name": user_data.name,
+            "password_hash": hashed_password,
             "language": user_data.language or "es",
             "theme_preference": user_data.theme_preference or "light",
         }).execute()
@@ -101,8 +102,12 @@ async def login(credentials: LoginRequest):
     user = result.data[0]
 
     # Verify password
-    # TODO: Compare with stored password hash
-    # For now, simplified demo
+    password_hash = user.get("password_hash")
+    if not password_hash or not verify_password(credentials.password, password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials"
+        )
 
     user_id = str(user["id"])
 
