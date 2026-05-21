@@ -2,22 +2,29 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline, Box } from '@mui/material';
 import { useAuthStore } from '@sisio/shared';
-import { HomePage, PhotoUploadPage, BirdResultPage, SightingsPage } from './pages';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { OfflineIndicator } from './components/OfflineIndicator';
+import {
+  HomePage,
+  PhotoUploadPage,
+  BirdResultPage,
+  SightingsPage,
+  AudioUploadPage,
+  MapPage,
+  ProfilePage,
+  SettingsPage,
+  AdminPage,
+} from './pages';
 
-// Placeholder pages (to be implemented)
-const AudioUploadPage = () => <div>Audio Upload Page</div>;
-const MapPage = () => <div>Map Page</div>;
-const ProfilePage = () => <div>Profile Page</div>;
-const SettingsPage = () => <div>Settings Page</div>;
-const LoginPage = () => <div>Login Page</div>;
-const OnboardingPage = () => <div>Onboarding Page</div>;
-const AdminPage = () => <div>Admin Page</div>;
+// Auth pages
+import { LoginPage } from './pages/LoginPage';
+import { OnboardingPage } from './pages/OnboardingPage';
+import { Navigation } from './components/Navigation';
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => (
   <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-    {/* Header/Navigation */}
+    <Navigation />
     {children}
-    {/* Footer */}
   </Box>
 );
 
@@ -49,9 +56,11 @@ export default function App() {
   }, []);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <BrowserRouter>
+    <ErrorBoundary>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <OfflineIndicator />
+        <BrowserRouter>
         <Routes>
           {!isAuthenticated && !isGuest ? (
             <>
@@ -69,19 +78,76 @@ export default function App() {
                   </MainLayout>
                 }
               />
-              <Route path="/photo-upload" element={<PhotoUploadPage />} />
-              <Route path="/audio-upload" element={<AudioUploadPage />} />
-              <Route path="/bird-result" element={<BirdResultPage />} />
-              <Route path="/sightings" element={<SightingsPage />} />
-              <Route path="/map" element={<MapPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/admin" element={<AdminPage />} />
+              <Route
+                path="/photo-upload"
+                element={
+                  <MainLayout>
+                    <PhotoUploadPage />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/audio-upload"
+                element={
+                  <MainLayout>
+                    <AudioUploadPage />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/bird-result"
+                element={
+                  <MainLayout>
+                    <BirdResultPage />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/sightings"
+                element={
+                  <MainLayout>
+                    <SightingsPage />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/map"
+                element={
+                  <MainLayout>
+                    <MapPage />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <MainLayout>
+                    <ProfilePage />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <MainLayout>
+                    <SettingsPage />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <MainLayout>
+                    <AdminPage />
+                  </MainLayout>
+                }
+              />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
           )}
         </Routes>
       </BrowserRouter>
-    </ThemeProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }

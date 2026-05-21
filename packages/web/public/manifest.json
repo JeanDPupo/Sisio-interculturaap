@@ -1,7 +1,7 @@
 {
-  "name": "Sisio - Preservación del Conocimiento Ancestral",
+  "name": "Sisio - Documentar y Proteger Biodiversidad Local",
   "short_name": "Sisio",
-  "description": "Conoce y preserva el conocimiento ancestral sobre las aves de tu territorio",
+  "description": "Una plataforma para documentar y proteger la biodiversidad local con el saber ancestral de comunidades indígenas. Identifica aves con fotos y sonidos, visualiza avistamientos en mapas.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -45,10 +45,10 @@
   "categories": ["education", "productivity"],
   "shortcuts": [
     {
-      "name": "Identificar Ave",
-      "short_name": "Identificar",
-      "description": "Identifica un ave por foto o sonido",
-      "url": "/identify",
+      "name": "Fotografía",
+      "short_name": "Foto",
+      "description": "Identifica un ave con una fotografía",
+      "url": "/photo-upload",
       "icons": [
         {
           "src": "/logo.png",
@@ -58,9 +58,22 @@
       ]
     },
     {
-      "name": "Mis Avistamientos",
-      "short_name": "Avistamientos",
-      "description": "Ver mis avistamientos registrados",
+      "name": "Sonido",
+      "short_name": "Audio",
+      "description": "Identifica un ave por su canto",
+      "url": "/audio-upload",
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Avistamientos",
+      "short_name": "Mapa",
+      "description": "Visualiza avistamientos en el mapa",
       "url": "/sightings",
       "icons": [
         {
@@ -70,5 +83,19 @@
         }
       ]
     }
-  ]
+  ],
+  "prefer_related_applications": false,
+  "share_target": {
+    "action": "/photo-upload",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "media",
+          "accept": ["image/*", "audio/*"]
+        }
+      ]
+    }
+  }
 }

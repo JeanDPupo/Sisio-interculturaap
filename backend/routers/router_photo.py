@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from services import inaturalist, supabase_service
+from services import supabase_service
 
 router = APIRouter()
 
@@ -13,7 +13,8 @@ async def identify_by_photo(file: UploadFile = File(...)):
 
     img_bytes = await file.read()
 
-    # 1. Identificar ave con iNaturalist
+    # 1. Identificar ave con iNaturalist (lazy import)
+    from services import inaturalist
     species_name = await inaturalist.identify(img_bytes)
     if not species_name:
         raise HTTPException(status_code=404, detail="No se pudo identificar el ave.")

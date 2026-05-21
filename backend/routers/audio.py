@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from starlette.concurrency import run_in_threadpool
 import os
 import tempfile
-from services import birdnet, supabase_service
+from services import supabase_service
 
 router = APIRouter()
 
@@ -21,7 +21,8 @@ async def identify_by_audio(file: UploadFile = File(...)):
         temp_path = temp_file.name
 
     try:
-        # 1. Identificar ave con BirdNET
+        # 1. Identificar ave con BirdNET (lazy import)
+        from services import birdnet
         species_name = await run_in_threadpool(birdnet.identify, temp_path)
         if not species_name:
             raise HTTPException(status_code=404, detail="No se detectó ningún ave en el audio proporcionado.")
