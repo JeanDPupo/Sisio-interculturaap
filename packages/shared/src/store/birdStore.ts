@@ -4,22 +4,21 @@ import { Bird, BirdIdentificationResult } from '../types';
 type BirdStore = {
   birds: Bird[];
   currentBird: Bird | null;
-  lastIdentificationResult: BirdIdentificationResult | null;
+  identificationResult: BirdIdentificationResult | null;
   loading: boolean;
   error: string | null;
   setBirds: (birds: Bird[]) => void;
   setCurrentBird: (bird: Bird | null) => void;
-  setLastIdentificationResult: (result: BirdIdentificationResult | null) => void;
+  setIdentificationResult: (result: BirdIdentificationResult | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   addBird: (bird: Bird) => void;
-  addIdentificationResult: (result: BirdIdentificationResult) => void;
 };
 
 export const useBirdStore = create<BirdStore>((set) => ({
   birds: [],
   currentBird: null,
-  lastIdentificationResult: null,
+  identificationResult: null,
   loading: false,
   error: null,
 
@@ -27,8 +26,8 @@ export const useBirdStore = create<BirdStore>((set) => ({
 
   setCurrentBird: (bird) => set({ currentBird: bird }),
 
-  setLastIdentificationResult: (result) =>
-    set({ lastIdentificationResult: result }),
+  setIdentificationResult: (result) =>
+    set({ identificationResult: result, currentBird: result?.bird || null }),
 
   setLoading: (loading) => set({ loading }),
 
@@ -37,14 +36,5 @@ export const useBirdStore = create<BirdStore>((set) => ({
   addBird: (bird) =>
     set((state) => ({
       birds: [bird, ...state.birds],
-    })),
-
-  addIdentificationResult: (result) =>
-    set((state) => ({
-      lastIdentificationResult: result,
-      currentBird: result.bird || null,
-      birds: result.bird
-        ? [result.bird, ...state.birds.filter((b) => b.id !== result.bird!.id)]
-        : state.birds,
     })),
 }));

@@ -248,7 +248,7 @@ export const ProfilePage: React.FC = () => {
           </Box>
           <Box>
             <Typography variant="body2" color="textSecondary">
-              Rol: {user?.role?.toUpperCase() || 'USER'}
+              Rol: {user?.is_admin ? 'ADMIN' : 'USER'}
             </Typography>
           </Box>
         </Paper>

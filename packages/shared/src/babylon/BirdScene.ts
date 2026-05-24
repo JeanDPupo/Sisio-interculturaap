@@ -1,4 +1,4 @@
-import * as BABYLON from 'babylonjs';
+import * as BABYLON from '@babylonjs/core';
 import { Bird } from '../types/bird';
 
 export interface BirdSceneConfig {

@@ -138,9 +138,9 @@ async def identify_by_photo(file: UploadFile = File(...)):
 
         img_bytes = await file.read()
 
-        # 1. Call iNaturalist to identify (lazy import)
-        from services import inaturalist
-        species_name = await inaturalist.identify(img_bytes)
+        # 1. Identify via active provider (lazy import)
+        from services.identify import identify_photo
+        species_name = await identify_photo(img_bytes)
         if not species_name:
             raise HTTPException(status_code=404, detail="No se pudo identificar el ave en la foto")
 

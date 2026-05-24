@@ -10,8 +10,13 @@ class UserBase(BaseModel):
     language: str = "es"
     theme_preference: str = "light"
 
+class UpgradeGuestRequest(BaseModel):
+    guest_id: str
+    email: str
+    password: str
+
 class UserCreate(UserBase):
-    password: Optional[str] = None
+    password: str
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
@@ -22,11 +27,11 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: uuid.UUID
-    profile_picture: Optional[str]
-    is_admin: bool
-    is_guest: bool
-    created_at: datetime
-    updated_at: datetime
+    profile_picture: Optional[str] = None
+    is_admin: bool = False
+    is_guest: bool = False
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -34,7 +39,7 @@ class UserResponse(UserBase):
 class GuestUserResponse(BaseModel):
     guest_id: uuid.UUID
     name: str
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
 class LoginRequest(BaseModel):
     email: EmailStr

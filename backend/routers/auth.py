@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from models.user import (
     UserCreate, LoginRequest, AuthResponse, UserResponse,
-    GuestUserResponse, UserUpdate
+    GuestUserResponse, UserUpdate, UpgradeGuestRequest
 )
 from services.auth_service import (
     hash_password, verify_password, create_access_token,
@@ -21,7 +21,7 @@ load_dotenv()
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SUPABASE_KEY"))
 
 def get_supabase_client() -> Client:
     return create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -165,18 +165,14 @@ async def create_guest_user(name: str):
     )
 
 @router.post("/upgrade-guest")
-async def upgrade_guest_to_registered(
-    guest_id: str,
-    email: str,
-    password: str
-):
+async def upgrade_guest_to_registered(data: UpgradeGuestRequest):
     """
     Convert a guest user to a registered user.
     """
     supabase = get_supabase_client()
 
     # Find guest user
-    result = supabase.table("users").select("*").eq("guest_id", guest_id).execute()
+    result = supabase.table("users").select("*").eq("guest_id", data.guest_id).execute()
     if not result.data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -186,10 +182,13 @@ async def upgrade_guest_to_registered(
     user = result.data[0]
     user_id = str(user["id"])
 
+    hashed_password = hash_password(data.password)
+
     # Update user
     try:
         supabase.table("users").update({
-            "email": email,
+            "email": data.email,
+            "password_hash": hashed_password,
             "is_guest": False,
         }).eq("id", user_id).execute()
     except Exception as e:

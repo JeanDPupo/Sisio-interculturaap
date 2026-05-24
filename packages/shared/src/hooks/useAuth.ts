@@ -9,6 +9,7 @@ export const useAuth = () => {
     isAuthenticated,
     isGuest,
     accessToken,
+    refreshToken,
     loading,
     error,
     setLoading,
@@ -28,6 +29,7 @@ export const useAuth = () => {
       try {
         const response = await apiService.register(data.name, data.email, data.password);
         registerSuccess(response.data);
+        apiService.setAccessToken(response.data.access_token);
         return response.data;
       } catch (err: any) {
         const message = err.response?.data?.detail || 'Error en registro';
@@ -113,15 +115,15 @@ export const useAuth = () => {
 
   const refreshAccessToken = useCallback(async () => {
     try {
-      if (!user?.id) return;
-      const response = await apiService.refreshToken(user.id);
+      if (!refreshToken) return;
+      const response = await apiService.refreshToken(refreshToken);
       if (response.data.access_token) {
         apiService.setAccessToken(response.data.access_token);
       }
     } catch (err: any) {
       console.error('Error refreshing token:', err);
     }
-  }, [user?.id]);
+  }, [refreshToken]);
 
   const updateProfile = useCallback(
     async (updates: Partial<User>) => {

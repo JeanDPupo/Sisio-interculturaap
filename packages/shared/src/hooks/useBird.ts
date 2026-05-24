@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useBirdStore } from '../store/birdStore';
+import { useOfflineStore } from '../store/offlineStore';
 import { apiService } from '../services/apiService';
 import { Bird, BirdIdentificationResult } from '../types';
 

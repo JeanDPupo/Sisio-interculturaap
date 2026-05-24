@@ -8,6 +8,7 @@ CREATE TABLE users (
     name TEXT NOT NULL,
     profile_picture TEXT,
     bio TEXT,
+    password_hash TEXT,
     language TEXT DEFAULT 'es',
     theme_preference TEXT DEFAULT 'light',
     is_admin BOOLEAN DEFAULT false,

@@ -1,6 +1,8 @@
 export { HomePage } from './HomePage';
 export { PhotoUploadPage } from './PhotoUploadPage';
 export { BirdResultPage } from './BirdResultPage';
+export { BirdsListPage } from './BirdsListPage';
+export { BirdDetailPage } from './BirdDetailPage';
 export { SightingsPage } from './SightingsPage';
 export { AudioUploadPage } from './AudioUploadPage';
 export { MapPage } from './MapPage';

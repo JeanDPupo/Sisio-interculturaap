@@ -5,28 +5,26 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore, useOfflineStore } from '@sisio/shared';
 
-// Screens (placeholders for now)
-const SplashScreen = () => <div>Splash Screen</div>;
-const HomeScreen = () => <div>Home Screen</div>;
-const PhotoCaptureScreen = () => <div>Photo Capture</div>;
-const AudioCaptureScreen = () => <div>Audio Capture</div>;
-const BirdResultScreen = () => <div>Bird Result</div>;
-const SightingsScreen = () => <div>Sightings</div>;
-const MapScreen = () => <div>Map</div>;
-const ProfileScreen = () => <div>Profile</div>;
-const SettingsScreen = () => <div>Settings</div>;
-const LoginScreen = () => <div>Login</div>;
-const OnboardingScreen = () => <div>Onboarding</div>;
+import {
+  SplashScreen,
+  OnboardingScreen,
+  LoginScreen,
+  RegisterScreen,
+  HomeScreen,
+  PhotoCaptureScreen,
+  AudioCaptureScreen,
+  BirdResultScreen,
+  SightingsScreen,
+  MapScreen,
+  ProfileScreen,
+  SettingsScreen,
+} from './screens';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 const HomeStackNavigator = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: false,
-    }}
-  >
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="HomeTab" component={HomeScreen} />
     <Stack.Screen name="PhotoCapture" component={PhotoCaptureScreen} />
     <Stack.Screen name="AudioCapture" component={AudioCaptureScreen} />
@@ -35,11 +33,7 @@ const HomeStackNavigator = () => (
 );
 
 const SightingsStackNavigator = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: false,
-    }}
-  >
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="SightingsTab" component={SightingsScreen} />
     <Stack.Screen name="BirdDetail" component={BirdResultScreen} />
   </Stack.Navigator>
@@ -97,10 +91,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize app
     const initializeApp = async () => {
-      // Check if user is logged in
-      // Load user profile if available
       setLoading(false);
     };
 
@@ -111,13 +102,13 @@ export default function App() {
     return <SplashScreen />;
   }
 
-  // Show onboarding if not authenticated and not a guest
   if (!isAuthenticated && !isGuest) {
     return (
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Main" component={MainTabNavigator} />
         </Stack.Navigator>
       </NavigationContainer>
@@ -131,6 +122,7 @@ export default function App() {
           <>
             <Stack.Screen name="Main" component={MainTabNavigator} />
             <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
           </>
         ) : (

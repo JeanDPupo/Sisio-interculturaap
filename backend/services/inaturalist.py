@@ -1,25 +1,35 @@
-import httpx
+import os
+import base64
+from google import genai
 
-INATURALIST_API_URL = "https://api.inaturalist.org/v1/computervision/score_image"
+_client = None
+
+def _get_client():
+    global _client
+    if _client is None:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not set in .env")
+        _client = genai.Client(api_key=api_key)
+    return _client
 
 async def identify(img_bytes: bytes) -> str | None:
     """
-    Envía una imagen a iNaturalist y retorna el nombre científico
-    de la especie con mayor puntaje.
+    Identifica un ave desde una imagen usando Gemini Vision API.
+    Retorna el nombre científico de la especie.
     """
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            INATURALIST_API_URL,
-            files={"image": ("photo.jpg", img_bytes, "image/jpeg")},
-            timeout=15.0
-        )
-    if resp.status_code != 200:
-        return None
+    c = _get_client()
+    img_b64 = base64.b64encode(img_bytes).decode()
 
-    results = resp.json().get("results", [])
-    if not results:
-        return None
+    response = c.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=[
+            "Identify the bird species in this image. Respond with ONLY the scientific name (genus and species), nothing else. Example: 'Ramphastos toco'",
+            {"inline_data": {"mime_type": "image/jpeg", "data": img_b64}}
+        ]
+    )
 
-    # Retorna el nombre científico del resultado con mayor score
-    top = results[0]
-    return top.get("taxon", {}).get("name")
+    name = response.text.strip().strip('"').strip("'")
+    if not name:
+        return None
+    return name

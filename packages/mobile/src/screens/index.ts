@@ -9,3 +9,4 @@ export { MapScreen } from './MapScreen';
 export { ProfileScreen } from './ProfileScreen';
 export { SettingsScreen } from './SettingsScreen';
 export { LoginScreen } from './LoginScreen';
+export { RegisterScreen } from './RegisterScreen';

@@ -49,7 +49,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
                 Recargar página
               </Button>
             </Box>
-            {process.env.NODE_ENV === 'development' && (
+            {import.meta.env.DEV && (
               <Box
                 component="pre"
                 sx={{

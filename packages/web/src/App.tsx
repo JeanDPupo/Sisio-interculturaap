@@ -14,6 +14,8 @@ import {
   ProfilePage,
   SettingsPage,
   AdminPage,
+  BirdsListPage,
+  BirdDetailPage,
 } from './pages';
 
 // Auth pages
@@ -99,6 +101,22 @@ export default function App() {
                 element={
                   <MainLayout>
                     <BirdResultPage />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/birds"
+                element={
+                  <MainLayout>
+                    <BirdsListPage />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/bird/:id"
+                element={
+                  <MainLayout>
+                    <BirdDetailPage />
                   </MainLayout>
                 }
               />

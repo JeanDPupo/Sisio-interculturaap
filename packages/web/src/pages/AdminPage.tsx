@@ -62,7 +62,7 @@ export const AdminPage: React.FC = () => {
   const [rejectionReason, setRejectionReason] = useState('');
 
   useEffect(() => {
-    if (user?.role !== 'admin') {
+    if (!user?.is_admin) {
       return;
     }
 
@@ -163,7 +163,7 @@ export const AdminPage: React.FC = () => {
     setModerationItems((prev) => prev.filter((i) => i.id !== item.id));
   };
 
-  if (user?.role !== 'admin') {
+  if (!user?.is_admin) {
     return (
       <Container sx={{ py: 4 }}>
         <Alert severity="error">

@@ -20,6 +20,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import ListIcon from '@mui/icons-material/List';
 import MapIcon from '@mui/icons-material/Map';
+import PetsIcon from '@mui/icons-material/Pets';
 import PersonIcon from '@mui/icons-material/Person';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -49,12 +50,13 @@ export const Navigation: React.FC = () => {
 
   const menuItems = [
     { label: 'Inicio', path: '/', icon: <HomeIcon /> },
+    { label: 'Aves', path: '/birds', icon: <PetsIcon /> },
     { label: 'Avistamientos', path: '/sightings', icon: <ListIcon /> },
     { label: 'Mapa', path: '/map', icon: <MapIcon /> },
     { label: 'Perfil', path: '/profile', icon: <PersonIcon /> },
   ];
 
-  const adminMenuItems = user?.role === 'admin' ? [
+  const adminMenuItems = user?.is_admin ? [
     { label: 'Admin', path: '/admin', icon: <AdminPanelSettingsIcon /> },
   ] : [];
 
@@ -87,7 +89,7 @@ export const Navigation: React.FC = () => {
               </Button>
             ))}
 
-            {user?.role === 'admin' && (
+            {user?.is_admin && (
               <Button
                 color="inherit"
                 onClick={() => navigate('/admin')}
@@ -148,7 +150,7 @@ export const Navigation: React.FC = () => {
               </ListItem>
             ))}
 
-            {user?.role === 'admin' && (
+            {user?.is_admin && (
               <ListItem
                 button
                 onClick={() => {

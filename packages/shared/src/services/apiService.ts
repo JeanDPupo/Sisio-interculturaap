@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 import { useOfflineStore } from '../store/offlineStore';
 import { v4 as uuidv4 } from 'uuid';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from '../utils/env';
 
 export class ApiService {
   private client: AxiosInstance;

@@ -12,19 +12,25 @@ import {
   CircularProgress,
   Alert,
   Grid,
+  IconButton,
+  InputAdornment,
 } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import MicIcon from '@mui/icons-material/Mic';
 import MapIcon from '@mui/icons-material/Map';
 import GroupIcon from '@mui/icons-material/Group';
-import { useAuth } from '@sisio/shared';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { useAuth, VALIDATION } from '@sisio/shared';
 
 export const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { createGuestUser, loading, error } = useAuth();
+  const { createGuestUser, register, loading, error } = useAuth();
   const [step, setStep] = useState(0);
   const [guestName, setGuestName] = useState('');
   const [localError, setLocalError] = useState('');
+  const [registerData, setRegisterData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [showPassword, setShowPassword] = useState(false);
 
   const features = [
     {
@@ -168,6 +174,32 @@ export const OnboardingPage: React.FC = () => {
     );
   }
 
+  const handleRegister = async () => {
+    if (!registerData.name.trim() || !registerData.email.trim() || !registerData.password.trim()) {
+      setLocalError('Por favor completa todos los campos');
+      return;
+    }
+    if (registerData.password !== registerData.confirmPassword) {
+      setLocalError('Las contraseñas no coinciden');
+      return;
+    }
+    if (registerData.password.length < VALIDATION.PASSWORD_MIN_LENGTH) {
+      setLocalError('La contraseña debe tener al menos ' + VALIDATION.PASSWORD_MIN_LENGTH + ' caracteres');
+      return;
+    }
+    try {
+      setLocalError('');
+      await register({
+        name: registerData.name.trim(),
+        email: registerData.email.trim(),
+        password: registerData.password,
+      });
+      navigate('/');
+    } catch (err) {
+      // error is set by useAuth hook
+    }
+  };
+
   if (step === 1) {
     return (
       <Container maxWidth="sm" sx={{ py: 8 }}>
@@ -181,25 +213,75 @@ export const OnboardingPage: React.FC = () => {
         </Box>
 
         <Paper sx={{ p: 4 }}>
-          <Typography variant="body2" sx={{ mb: 3, textAlign: 'center', color: '#666' }}>
-            La funcionalidad de registro está disponible al iniciar sesión en la aplicación móvil
-            o visitando nuestro sitio web completo.
-          </Typography>
+          {(error || localError) && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error || localError}
+            </Alert>
+          )}
+
+          <TextField
+            fullWidth
+            label="Nombre"
+            value={registerData.name}
+            onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+            margin="normal"
+            disabled={loading}
+            autoFocus
+          />
+          <TextField
+            fullWidth
+            label="Email"
+            type="email"
+            value={registerData.email}
+            onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+            margin="normal"
+            disabled={loading}
+          />
+          <TextField
+            fullWidth
+            label="Contraseña"
+            type={showPassword ? 'text' : 'password'}
+            value={registerData.password}
+            onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+            margin="normal"
+            disabled={loading}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            fullWidth
+            label="Confirmar Contraseña"
+            type="password"
+            value={registerData.confirmPassword}
+            onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+            margin="normal"
+            disabled={loading}
+          />
 
           <Button
             fullWidth
             variant="contained"
             size="large"
-            onClick={() => navigate('/login')}
-            sx={{ mb: 2 }}
+            onClick={handleRegister}
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={20} /> : undefined}
+            sx={{ mt: 3, mb: 2 }}
           >
-            Ir a Inicio de Sesión
+            {loading ? 'Registrando...' : 'Crear Cuenta'}
           </Button>
 
           <Button
             fullWidth
             variant="outlined"
             onClick={() => setStep(0)}
+            disabled={loading}
           >
             Volver Atrás
           </Button>

@@ -2,4 +2,7 @@ packages:
   - 'packages/*'
   - 'backend'
 allowBuilds:
-  esbuild: set this to true or false
+  babylonjs: true
+  esbuild: false
+minimumReleaseAgeExclude:
+  - babylonjs@9.9.0

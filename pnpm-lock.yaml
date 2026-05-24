@@ -6,6 +6,12 @@ settings:
 
 importers:
 
+  .:
+    dependencies:
+      babylonjs:
+        specifier: ^9.9.0
+        version: 9.9.0
+
   packages/mobile:
     dependencies:
       '@react-navigation/bottom-tabs':
@@ -78,6 +84,9 @@ importers:
       axios:
         specifier: ^1.6.2
         version: 1.16.1
+      babylonjs:
+        specifier: ^9.8.0
+        version: 9.8.0
       dexie:
         specifier: ^3.2.4
         version: 3.2.7
@@ -2122,6 +2131,12 @@ packages:
 
   babylonjs-gltf2interface@6.49.0:
     resolution: {integrity: sha512-4qzKCgEayti/YUaeMgAAZxZJlx/kLqXxoC+G8gODYz9wOV9UjnHF09wREZ5cuELzzY/rjSJMqkgDfYbUQIQ6/A==}
+
+  babylonjs@9.8.0:
+    resolution: {integrity: sha512-0yQDucmDdUFcMd+6dQL674ZEUNM6BAWj7bCRw4D1Qeb1ZcUOwPUBQ004flHBSv6UztiscvqiLuvUwTIBq/EuuA==}
+
+  babylonjs@9.9.0:
+    resolution: {integrity: sha512-bxKTOOwGROvIYRkRtdRTwLEEnSzQ37Ioa946cVO1B+jddEIu2DxAr+nqAkN9wieEeLg5mcp5t0RP6mhHTP4VwA==}
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -8119,6 +8134,10 @@ snapshots:
       - supports-color
 
   babylonjs-gltf2interface@6.49.0: {}
+
+  babylonjs@9.8.0: {}
+
+  babylonjs@9.9.0: {}
 
   balanced-match@1.0.2: {}
 
