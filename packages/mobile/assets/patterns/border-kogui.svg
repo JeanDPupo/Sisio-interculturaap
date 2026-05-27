@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="10" viewBox="0 0 300 10" fill="none">
+  <defs>
+    <pattern id="kogui-border" patternUnits="userSpaceOnUse" width="30" height="10">
+      <path d="M0 5h10l5-5 5 5h10" stroke="#D4A017" stroke-width="1.5" fill="none"/>
+      <circle cx="15" cy="0" r="1.5" fill="#2D5016"/>
+    </pattern>
+  </defs>
+  <rect width="300" height="10" fill="url(#kogui-border)"/>
+</svg>

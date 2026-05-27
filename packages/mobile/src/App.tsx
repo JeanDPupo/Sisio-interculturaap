@@ -3,7 +3,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 import { useAuthStore, useOfflineStore } from '@sisio/shared';
+import { theme, tabBarStyle } from './theme';
 
 import {
   SplashScreen,
@@ -57,8 +59,9 @@ const MainTabNavigator = () => (
 
         return <Ionicons name={iconName} size={size} color={color} />;
       },
-      tabBarActiveTintColor: '#2196F3',
-      tabBarInactiveTintColor: 'gray',
+      tabBarActiveTintColor: theme.colors.secondary,
+      tabBarInactiveTintColor: theme.colors.textSecondary,
+      tabBarStyle,
       headerShown: false,
     })}
   >
@@ -85,6 +88,18 @@ const MainTabNavigator = () => (
   </Tab.Navigator>
 );
 
+const navTheme = {
+  dark: true,
+  colors: {
+    primary: theme.colors.secondary,
+    background: theme.colors.background,
+    card: theme.colors.surface,
+    text: theme.colors.text,
+    border: theme.colors.border,
+    notification: theme.colors.accent,
+  },
+};
+
 export default function App() {
   const { user, isGuest, isAuthenticated } = useAuthStore();
   const { isOnline } = useOfflineStore();
@@ -104,7 +119,8 @@ export default function App() {
 
   if (!isAuthenticated && !isGuest) {
     return (
-      <NavigationContainer>
+      <NavigationContainer theme={navTheme}>
+        <StatusBar style="light" />
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
@@ -116,7 +132,8 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navTheme}>
+      <StatusBar style="light" />
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated && isGuest ? (
           <>

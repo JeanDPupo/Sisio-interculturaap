@@ -1,26 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Menu,
-  MenuItem,
-  Box,
-  IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
+  AppBar, Toolbar, Typography, Button, Box, IconButton, Drawer,
+  List, ListItem, ListItemIcon, ListItemText, Divider,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
+import PetsIcon from '@mui/icons-material/Pets';
 import ListIcon from '@mui/icons-material/List';
 import MapIcon from '@mui/icons-material/Map';
-import PetsIcon from '@mui/icons-material/Pets';
 import PersonIcon from '@mui/icons-material/Person';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -31,21 +19,11 @@ export const Navigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
-    handleMenuClose();
   };
 
   const menuItems = [
@@ -56,150 +34,84 @@ export const Navigation: React.FC = () => {
     { label: 'Perfil', path: '/profile', icon: <PersonIcon /> },
   ];
 
-  const adminMenuItems = user?.is_admin ? [
-    { label: 'Admin', path: '/admin', icon: <AdminPanelSettingsIcon /> },
-  ] : [];
-
   return (
     <>
-      <AppBar position="sticky">
+      <AppBar position="sticky" sx={{ background: 'rgba(13,27,15,0.9)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <Toolbar>
           <Typography
-            variant="h6"
-            sx={{ flexGrow: 1, fontWeight: 'bold', cursor: 'pointer' }}
+            variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold', cursor: 'pointer', fontFamily: '"Playfair Display", serif', color: '#F0F7EE' }}
             onClick={() => navigate('/')}
           >
-            🦅 Sisio
+            Sisio
           </Typography>
 
-          {/* Desktop Menu */}
-          <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1 }}>
+          <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 0.5 }}>
             {menuItems.map((item) => (
-              <Button
-                key={item.path}
-                color="inherit"
-                onClick={() => navigate(item.path)}
+              <Button key={item.path} onClick={() => navigate(item.path)}
                 sx={{
-                  backgroundColor:
-                    location.pathname === item.path ? 'rgba(255,255,255,0.2)' : 'transparent',
-                  borderRadius: '4px',
+                  color: location.pathname === item.path ? '#D4A017' : '#b0c4a0',
+                  borderRadius: 20, px: 2,
+                  background: location.pathname === item.path ? 'rgba(212,160,23,0.1)' : 'transparent',
+                  '&:hover': { background: 'rgba(255,255,255,0.05)', color: '#F0F7EE' },
                 }}
               >
                 {item.label}
               </Button>
             ))}
-
             {user?.is_admin && (
-              <Button
-                color="inherit"
-                onClick={() => navigate('/admin')}
-                sx={{
-                  backgroundColor: location.pathname === '/admin' ? 'rgba(255,255,255,0.2)' : 'transparent',
-                  borderRadius: '4px',
-                }}
-              >
+              <Button onClick={() => navigate('/admin')}
+                sx={{ color: location.pathname === '/admin' ? '#D4A017' : '#b0c4a0', borderRadius: 20 }}>
                 Admin
               </Button>
             )}
-
-            <Button
-              color="inherit"
-              onClick={() => navigate('/settings')}
-              startIcon={<SettingsIcon />}
-              sx={{
-                backgroundColor: location.pathname === '/settings' ? 'rgba(255,255,255,0.2)' : 'transparent',
-                borderRadius: '4px',
-              }}
-            >
-              Config
-            </Button>
+            <IconButton onClick={() => navigate('/settings')} sx={{ color: '#b0c4a0', ml: 1 }}>
+              <SettingsIcon />
+            </IconButton>
           </Box>
 
-          {/* Mobile Menu Button */}
-          <IconButton
-            color="inherit"
-            onClick={() => setMobileOpen(true)}
-            sx={{ display: { xs: 'flex', sm: 'none' } }}
-          >
+          <IconButton color="inherit" onClick={() => setMobileOpen(true)} sx={{ display: { xs: 'flex', sm: 'none' }, color: '#F0F7EE' }}>
             <MenuIcon />
           </IconButton>
         </Toolbar>
       </AppBar>
 
-      {/* Mobile Drawer */}
-      <Drawer anchor="right" open={mobileOpen} onClose={() => setMobileOpen(false)}>
-        <Box sx={{ width: 250, p: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+      <Drawer anchor="right" open={mobileOpen} onClose={() => setMobileOpen(false)}
+        PaperProps={{ sx: { background: '#0D1B0F', color: '#F0F7EE', width: 250 } }}>
+        <Box sx={{ p: 2 }}>
+          <Typography variant="h6" sx={{ fontFamily: '"Playfair Display", serif', color: '#D4A017', mb: 2 }}>
             Menú
           </Typography>
-          <Divider sx={{ mb: 2 }} />
-
+          <Divider sx={{ mb: 2, borderColor: 'rgba(255,255,255,0.08)' }} />
           <List>
             {menuItems.map((item) => (
-              <ListItem
-                key={item.path}
-                button
-                onClick={() => {
-                  navigate(item.path);
-                  setMobileOpen(false);
-                }}
-                selected={location.pathname === item.path}
-              >
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.label} />
+              <ListItem key={item.path} onClick={() => { navigate(item.path); setMobileOpen(false); }}
+                sx={{ borderRadius: 12, mb: 0.5, cursor: 'pointer', '&:hover': { background: 'rgba(255,255,255,0.05)' } }}>
+                <ListItemIcon sx={{ color: location.pathname === item.path ? '#D4A017' : '#b0c4a0', minWidth: 40 }}>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} sx={{ '& .MuiTypography-root': { color: location.pathname === item.path ? '#D4A017' : '#F0F7EE' } }} />
               </ListItem>
             ))}
-
             {user?.is_admin && (
-              <ListItem
-                button
-                onClick={() => {
-                  navigate('/admin');
-                  setMobileOpen(false);
-                }}
-                selected={location.pathname === '/admin'}
-              >
-                <ListItemIcon>
-                  <AdminPanelSettingsIcon />
-                </ListItemIcon>
+              <ListItem onClick={() => { navigate('/admin'); setMobileOpen(false); }}
+                sx={{ borderRadius: 12, mb: 0.5, cursor: 'pointer', '&:hover': { background: 'rgba(255,255,255,0.05)' } }}>
+                <ListItemIcon sx={{ color: '#b0c4a0', minWidth: 40 }}><AdminPanelSettingsIcon /></ListItemIcon>
                 <ListItemText primary="Admin" />
               </ListItem>
             )}
-
-            <ListItem
-              button
-              onClick={() => {
-                navigate('/settings');
-                setMobileOpen(false);
-              }}
-              selected={location.pathname === '/settings'}
-            >
-              <ListItemIcon>
-                <SettingsIcon />
-              </ListItemIcon>
+            <ListItem onClick={() => { navigate('/settings'); setMobileOpen(false); }}
+              sx={{ borderRadius: 12, mb: 0.5, cursor: 'pointer', '&:hover': { background: 'rgba(255,255,255,0.05)' } }}>
+              <ListItemIcon sx={{ color: '#b0c4a0', minWidth: 40 }}><SettingsIcon /></ListItemIcon>
               <ListItemText primary="Configuración" />
             </ListItem>
-
-            <Divider sx={{ my: 2 }} />
-
-            {user && (
-              <ListItem button onClick={handleLogout}>
-                <ListItemIcon>
-                  <LogoutIcon />
-                </ListItemIcon>
-                <ListItemText primary="Cerrar Sesión" />
-              </ListItem>
-            )}
+            <Divider sx={{ my: 2, borderColor: 'rgba(255,255,255,0.08)' }} />
+            <ListItem onClick={handleLogout} sx={{ borderRadius: 12, cursor: 'pointer', '&:hover': { background: 'rgba(255,255,255,0.05)' } }}>
+              <ListItemIcon sx={{ color: '#b0c4a0', minWidth: 40 }}><LogoutIcon /></ListItemIcon>
+              <ListItemText primary="Cerrar Sesión" />
+            </ListItem>
           </List>
-
           {user && (
-            <Box sx={{ mt: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                {user.name || 'Usuario'}
-              </Typography>
-              <Typography variant="caption" color="textSecondary">
-                {user.email}
-              </Typography>
+            <Box sx={{ mt: 3, p: 2, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#F0F7EE' }}>{user.name || 'Usuario'}</Typography>
+              <Typography variant="caption" sx={{ color: '#b0c4a0' }}>{user.email}</Typography>
             </Box>
           )}
         </Box>

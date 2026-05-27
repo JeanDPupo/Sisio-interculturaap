@@ -15,3 +15,6 @@ export * from './utils';
 
 // Config
 export * from './config';
+
+// Theme
+export * from './theme';

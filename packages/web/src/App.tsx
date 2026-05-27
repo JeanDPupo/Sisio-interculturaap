@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline, Box } from '@mui/material';
-import { useAuthStore } from '@sisio/shared';
+import { useAuthStore, colors } from '@sisio/shared';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import {
@@ -32,20 +32,95 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => (
 
 export default function App() {
   const { user, isGuest, isAuthenticated } = useAuthStore();
-  const theme = createTheme({
-    palette: {
-      mode: 'light',
-      primary: {
-        main: '#2196F3',
-      },
-      secondary: {
-        main: '#4CAF50',
-      },
-    },
-    typography: {
-      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    },
-  });
+  const [darkMode, setDarkMode] = React.useState(true);
+  const theme = React.useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: darkMode ? 'dark' : 'light',
+          primary: {
+            main: colors.verdeSelva,
+            light: colors.verdeHoja,
+            dark: colors.negroSelva,
+          },
+          secondary: {
+            main: colors.oroIndigena,
+            light: colors.ambarSolar,
+          },
+          ...(darkMode
+            ? {
+                background: {
+                  default: colors.negroSelva,
+                  paper: '#1a2e1e',
+                },
+                text: {
+                  primary: colors.blancoNiebla,
+                  secondary: '#b0c4a0',
+                },
+              }
+            : {
+                background: {
+                  default: colors.blancoNiebla,
+                  paper: '#ffffff',
+                },
+                text: {
+                  primary: colors.negroSelva,
+                  secondary: '#5a6b52',
+                },
+              }),
+          error: { main: colors.riesgoAlto },
+          warning: { main: colors.riesgoMedio },
+          success: { main: colors.riesgoBajo },
+        },
+        typography: {
+          fontFamily: '"Inter", "DM Sans", "Roboto", sans-serif',
+          h4: { fontFamily: '"Playfair Display", serif', fontWeight: 700 },
+          h5: { fontFamily: '"Playfair Display", serif', fontWeight: 600 },
+          h6: { fontWeight: 600 },
+        },
+        shape: { borderRadius: 12 },
+        components: {
+          MuiCard: {
+            styleOverrides: {
+              root: {
+                backdropFilter: 'blur(20px)',
+                background: darkMode
+                  ? 'rgba(255,255,255,0.05)'
+                  : 'rgba(255,255,255,0.8)',
+                border: darkMode
+                  ? '1px solid rgba(255,255,255,0.1)'
+                  : '1px solid rgba(0,0,0,0.08)',
+                borderRadius: 20,
+              },
+            },
+          },
+          MuiButton: {
+            styleOverrides: {
+              root: {
+                borderRadius: 12,
+                textTransform: 'none',
+                fontWeight: 600,
+                padding: '10px 24px',
+              },
+              containedPrimary: {
+                background: `linear-gradient(135deg, ${colors.verdeSelva}, ${colors.oroIndigena})`,
+                '&:hover': {
+                  background: `linear-gradient(135deg, ${colors.verdeMusgo}, ${colors.ambarSolar})`,
+                },
+              },
+            },
+          },
+          MuiCssBaseline: {
+            styleOverrides: {
+              body: {
+                scrollBehavior: 'smooth',
+              },
+            },
+          },
+        },
+      }),
+    [darkMode]
+  );
 
   useEffect(() => {
     // Initialize app
