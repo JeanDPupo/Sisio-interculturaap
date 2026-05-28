@@ -2,7 +2,8 @@ import { useCallback } from 'react';
 import { useBirdStore } from '../store/birdStore';
 import { useOfflineStore } from '../store/offlineStore';
 import { apiService } from '../services/apiService';
-import { Bird, BirdIdentificationResult } from '../types';
+import { getProviderManager } from '../services/identification/providerManager';
+import type { Bird, BirdIdentificationResult } from '../types';
 
 export const useBird = () => {
   const {
@@ -73,17 +74,41 @@ export const useBird = () => {
     [setLoading, setError, setBirds]
   );
 
+  function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(',')[1] || '');
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   const identifyFromPhoto = useCallback(
     async (file: File, latitude?: number, longitude?: number) => {
       setLoading(true);
       try {
-        const response = await apiService.identifyBirdFromPhoto(file, latitude, longitude);
-        const result: BirdIdentificationResult = response.data;
-        setIdentificationResult(result);
-        if (result.bird) {
-          addBird(result.bird);
+        const base64 = await fileToBase64(file);
+        const manager = getProviderManager();
+        const { result, usedProvider } = await manager.identify({ imageBase64: base64 });
+
+        if (result) {
+          setIdentificationResult(result);
+          if (result.bird) {
+            addBird(result.bird);
+          }
+          return result;
         }
-        return result;
+
+        const response = await apiService.identifyBirdFromPhoto(file, latitude, longitude);
+        const backendResult: BirdIdentificationResult = response.data;
+        setIdentificationResult(backendResult);
+        if (backendResult.bird) {
+          addBird(backendResult.bird);
+        }
+        return backendResult;
       } catch (err: any) {
         const message = err.response?.data?.detail || 'Error identificando ave de foto';
         setError(message);

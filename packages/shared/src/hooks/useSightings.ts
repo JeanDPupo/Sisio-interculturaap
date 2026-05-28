@@ -8,13 +8,10 @@ export const useSightings = () => {
     sightings,
     loading,
     error,
-    currentSighting,
     setSightings,
     setLoading,
     setError,
-    setCurrentSighting,
     addSighting,
-    updateSightingInStore,
     removeSighting,
   } = useSightingStore();
 
@@ -42,7 +39,6 @@ export const useSightings = () => {
       setLoading(true);
       try {
         const response = await apiService.getSightingById(id);
-        setCurrentSighting(response.data);
         return response.data;
       } catch (err: any) {
         const message = err.response?.data?.detail || 'Error obteniendo avistamiento';
@@ -96,7 +92,6 @@ export const useSightings = () => {
       setLoading(true);
       try {
         const response = await apiService.updateSighting(id, updates);
-        updateSightingInStore(id, response.data);
         return response.data;
       } catch (err: any) {
         const message = err.response?.data?.detail || 'Error actualizando avistamiento';
@@ -171,7 +166,6 @@ export const useSightings = () => {
     sightings,
     loading,
     error,
-    currentSighting,
     getSightings,
     getSightingById,
     getSightingsForMap,

@@ -5,7 +5,9 @@ export * from './types';
 export * from './store';
 
 // Services
-export { apiService, ApiService } from './services/apiService';
+export { apiService, ApiService } from './services';
+export type { IdentificationProvider, IdentificationProviderConfig, IdentifyOptions } from './services';
+export { GroqProvider, ProviderManager, getProviderManager } from './services';
 
 // Hooks
 export * from './hooks';

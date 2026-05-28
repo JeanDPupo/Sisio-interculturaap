@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '@sisio/shared';
+import { theme } from '../theme';
 
 export const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
@@ -22,86 +23,72 @@ export const LoginScreen = ({ navigation }: any) => {
       alert('Por favor completa todos los campos');
       return;
     }
-
     setLoading(true);
     try {
       await login({ email: email.trim(), password });
       navigation.replace('Main');
     } catch (err) {
-      alert(error || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRegister = () => {
-    navigation.navigate('Register');
-  };
-
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
       <SafeAreaView style={styles.content}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backButton}>← Atrás</Text>
-          </TouchableOpacity>
-        </View>
-
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backArrow}>‹</Text>
+        </TouchableOpacity>
         <View style={styles.formContainer}>
-          <Text style={styles.logo}>🦅</Text>
+          <Text style={styles.icon}>🦅</Text>
           <Text style={styles.title}>Iniciar Sesión</Text>
           <Text style={styles.subtitle}>Accede a tu cuenta en Sisio</Text>
-
           <View style={styles.form}>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
               <TextInput
                 style={styles.input}
                 placeholder="tu@email.com"
+                placeholderTextColor="rgba(255,255,255,0.3)"
                 value={email}
                 onChangeText={setEmail}
                 editable={!loading}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                placeholderTextColor="#999"
               />
             </View>
-
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Contraseña</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Tu contraseña"
+                placeholderTextColor="rgba(255,255,255,0.3)"
                 value={password}
                 onChangeText={setPassword}
                 editable={!loading}
                 secureTextEntry
-                placeholderTextColor="#999"
               />
             </View>
-
             {error && (
               <View style={styles.errorBox}>
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
-
             <TouchableOpacity
-              style={[styles.button, styles.primaryButton, loading && styles.buttonDisabled]}
+              style={[styles.primaryButton, loading && styles.buttonDisabled]}
               onPress={handleLogin}
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#ffffff" />
+                <ActivityIndicator color={theme.colors.background} />
               ) : (
                 <Text style={styles.primaryButtonText}>Iniciar Sesión</Text>
               )}
             </TouchableOpacity>
           </View>
-
           <View style={styles.footer}>
             <Text style={styles.footerText}>¿No tienes cuenta? </Text>
-            <TouchableOpacity onPress={handleRegister}>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
               <Text style={styles.registerLink}>Regístrate aquí</Text>
             </TouchableOpacity>
           </View>
@@ -114,40 +101,42 @@ export const LoginScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.background,
   },
   content: {
     flex: 1,
   },
-  header: {
+  backButton: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    width: 50,
   },
-  backButton: {
-    fontSize: 16,
-    color: '#2196F3',
-    fontWeight: '500',
+  backArrow: {
+    fontSize: 32,
+    color: theme.colors.text,
+    fontWeight: '300',
   },
   formContainer: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  logo: {
+  icon: {
     fontSize: 48,
     textAlign: 'center',
     marginBottom: 16,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '700',
     textAlign: 'center',
     marginBottom: 8,
-    color: '#333',
+    color: theme.colors.text,
+    fontFamily: theme.fonts.display,
   },
   subtitle: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 32,
   },
@@ -161,42 +150,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#333',
+    color: theme.colors.text,
   },
   input: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     fontSize: 16,
-    color: '#333',
+    color: theme.colors.text,
   },
   errorBox: {
-    backgroundColor: '#ffebee',
+    backgroundColor: 'rgba(244, 67, 54, 0.1)',
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 67, 54, 0.3)',
   },
   errorText: {
-    color: '#c62828',
+    color: theme.colors.error,
     fontSize: 14,
   },
-  button: {
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
   primaryButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: theme.colors.secondary,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
   },
   primaryButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
+    fontWeight: '700',
+    color: theme.colors.background,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   footer: {
     flexDirection: 'row',
@@ -205,11 +195,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
   },
   registerLink: {
     fontSize: 14,
-    color: '#2196F3',
+    color: theme.colors.secondary,
     fontWeight: '600',
   },
 });

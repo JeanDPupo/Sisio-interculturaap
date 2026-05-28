@@ -10,6 +10,7 @@ import {
 import { Audio } from 'expo-av';
 import * as Location from 'expo-location';
 import { useBirdStore, useOfflineStore, apiService } from '@sisio/shared';
+import { theme } from '../theme';
 
 export const AudioCaptureScreen = ({ navigation }: any) => {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -18,7 +19,7 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const durationInterval = useRef<any>(null);
-  const { setLastIdentificationResult, setLoading: setBirdLoading } = useBirdStore();
+  const { setIdentificationResult, setLoading: setBirdLoading } = useBirdStore();
   const { isOnline } = useOfflineStore();
   const { addToQueue } = useOfflineStore();
 
@@ -26,9 +27,7 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
     try {
       const { status } = await Audio.requestPermissionsAsync();
       return status === 'granted';
-    } catch (error) {
-      return false;
-    }
+    } catch { return false; }
   };
 
   const getLocation = async () => {
@@ -39,9 +38,7 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
         setLocation(loc);
         return loc;
       }
-    } catch (error) {
-      console.log('Error getting location:', error);
-    }
+    } catch { return null; }
     return null;
   };
 
@@ -51,75 +48,53 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
       alert('Se necesita permiso de micrófono');
       return;
     }
-
     try {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
-
       const rec = new Audio.Recording();
-      await rec.prepareToRecordAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      await rec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
       await rec.startAsync();
-
       setRecording(rec);
       setIsRecording(true);
       setDuration(0);
       await getLocation();
-
       durationInterval.current = setInterval(() => {
         setDuration((prev) => prev + 100);
       }, 100);
-    } catch (error) {
-      alert('Error al iniciar grabación');
-    }
+    } catch { alert('Error al iniciar grabación'); }
   };
 
   const stopRecording = async () => {
     if (!recording) return;
-
     try {
       clearInterval(durationInterval.current);
       await recording.stopAndUnloadAsync();
       setIsRecording(false);
       setRecording(recording);
-    } catch (error) {
-      alert('Error al detener grabación');
-    }
+    } catch { alert('Error al detener grabación'); }
   };
 
   const handleIdentify = async () => {
-    if (!recording) {
-      alert('Por favor graba un audio primero');
-      return;
-    }
-
+    if (!recording) return;
     setLoading(true);
     setBirdLoading(true);
-
     try {
       const uri = recording.getURI();
-      if (!uri) {
-        alert('Error al procesar audio');
-        return;
-      }
-
+      if (!uri) return;
       const file = {
         uri,
         type: 'audio/wav',
         name: `audio_${Date.now()}.wav`,
       } as any;
-
       if (isOnline && location) {
         const response = await apiService.identifyBirdFromAudio(
           file,
           location.coords.latitude,
           location.coords.longitude
         );
-
-        setLastIdentificationResult(response.data);
+        setIdentificationResult(response.data);
         navigation.navigate('BirdResult');
       } else if (!isOnline) {
         addToQueue({
@@ -133,16 +108,13 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
           timestamp: new Date().toISOString(),
           retries: 0,
         });
-
-        alert('Audio guardado en cola. Se identificará cuando haya conexión.');
+        alert('Audio guardado en cola.');
         setRecording(null);
         setDuration(0);
         navigation.goBack();
       }
-    } catch (error) {
-      console.log('Error:', error);
-      alert('Error al identificar. Intenta de nuevo.');
-    } finally {
+    } catch { alert('Error al identificar.'); }
+    finally {
       setLoading(false);
       setBirdLoading(false);
     }
@@ -151,111 +123,101 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
   const formatDuration = (ms: number) => {
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
-    const displaySeconds = seconds % 60;
-    return `${minutes}:${displaySeconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${(seconds % 60).toString().padStart(2, '0')}`;
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Atrás</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Sonido del Ave</Text>
+        <View style={styles.backBtn} />
       </View>
-
       <View style={styles.content}>
         <View style={styles.recordingBox}>
-          <Text style={styles.recordingIcon}>🎵</Text>
-
+          <Text style={styles.recordingIcon}>
+            {isRecording ? '🎙️' : recording ? '✅' : '🎵'}
+          </Text>
           {isRecording ? (
             <>
+              <View style={styles.waveformContainer}>
+                {[...Array(5)].map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.waveformBar,
+                      { height: 20 + Math.random() * 40 },
+                    ]}
+                  />
+                ))}
+              </View>
               <View style={styles.recordingIndicator}>
                 <View style={styles.recordingDot} />
-                <Text style={styles.recordingText}>Grabando...</Text>
+                <Text style={styles.recordingText}>Grabando</Text>
               </View>
               <Text style={styles.duration}>{formatDuration(duration)}</Text>
             </>
           ) : recording ? (
             <>
-              <Text style={styles.recordedLabel}>Audio Grabado</Text>
+              <Text style={styles.recordedLabel}>Audio grabado</Text>
               <Text style={styles.duration}>{formatDuration(duration)}</Text>
             </>
           ) : (
-            <Text style={styles.noAudioText}>Presiona para grabar el canto</Text>
+            <Text style={styles.noAudioText}>
+              Presiona para grabar el canto del ave
+            </Text>
           )}
         </View>
-
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>
-            📍 Ubicación: {location ? 'Capturada' : 'No disponible'}
+        <View style={styles.locationBadge}>
+          <Text style={styles.locationText}>
+            📍 {location ? 'Ubicación capturada' : 'Sin ubicación'}
           </Text>
         </View>
-
         <View style={styles.actions}>
           {!isRecording ? (
             <>
               <TouchableOpacity
-                style={[styles.largeButton, styles.recordButton]}
+                style={[styles.recordButton, recording && styles.recordButtonDone]}
                 onPress={startRecording}
                 disabled={recording !== null}
               >
-                <Text style={styles.buttonIcon}>🎙️</Text>
-                <Text style={styles.buttonText}>
+                <Text style={styles.recordIcon}>
+                  {recording ? '✅' : '🎙️'}
+                </Text>
+                <Text style={styles.recordButtonText}>
                   {recording ? 'Audio Listo' : 'Iniciar Grabación'}
                 </Text>
               </TouchableOpacity>
-
               {recording && (
                 <>
                   <TouchableOpacity
-                    style={[styles.largeButton, styles.secondaryButton]}
-                    onPress={() => {
-                      setRecording(null);
-                      setDuration(0);
-                    }}
+                    style={styles.secondaryButton}
+                    onPress={() => { setRecording(null); setDuration(0); }}
                   >
                     <Text style={styles.secondaryButtonText}>Descartar</Text>
                   </TouchableOpacity>
-
                   <TouchableOpacity
-                    style={[
-                      styles.largeButton,
-                      styles.primaryButton,
-                      loading && styles.buttonDisabled,
-                    ]}
+                    style={[styles.primaryButton, loading && styles.buttonDisabled]}
                     onPress={handleIdentify}
                     disabled={loading}
                   >
                     {loading ? (
-                      <ActivityIndicator color="#ffffff" />
+                      <ActivityIndicator color={theme.colors.background} />
                     ) : (
-                      <>
-                        <Text style={styles.buttonIcon}>🦅</Text>
-                        <Text style={styles.buttonText}>Identificar Ave</Text>
-                      </>
+                      <Text style={styles.primaryButtonText}>Identificar Ave</Text>
                     )}
                   </TouchableOpacity>
                 </>
               )}
             </>
           ) : (
-            <TouchableOpacity
-              style={[styles.largeButton, styles.stopButton]}
-              onPress={stopRecording}
-            >
-              <Text style={styles.buttonIcon}>⏹️</Text>
-              <Text style={styles.buttonText}>Detener Grabación</Text>
+            <TouchableOpacity style={styles.stopButton} onPress={stopRecording}>
+              <Text style={styles.stopIcon}>⏹</Text>
+              <Text style={styles.stopButtonText}>Detener</Text>
             </TouchableOpacity>
           )}
-        </View>
-
-        <View style={styles.tipBox}>
-          <Text style={styles.tipTitle}>💡 Consejos</Text>
-          <Text style={styles.tipText}>
-            - Graba mínimo 5-10 segundos{'\n'}- Evita ruido de fondo{'\n'}- Acércate al ave
-            si es posible
-          </Text>
         </View>
       </View>
     </SafeAreaView>
@@ -265,28 +227,25 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafafa',
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
-  backButton: {
-    fontSize: 16,
-    color: '#2196F3',
-    fontWeight: '500',
-    marginRight: 12,
+  backBtn: { width: 40 },
+  backArrow: {
+    fontSize: 32,
+    color: theme.colors.text,
+    fontWeight: '300',
   },
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
-    flex: 1,
+    color: theme.colors.text,
   },
   content: {
     flex: 1,
@@ -294,115 +253,124 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   recordingBox: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 20,
     padding: 32,
     alignItems: 'center',
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  recordingIcon: {
-    fontSize: 64,
+  recordingIcon: { fontSize: 56, marginBottom: 16 },
+  waveformContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     marginBottom: 16,
+    height: 60,
+  },
+  waveformBar: {
+    width: 4,
+    backgroundColor: theme.colors.secondary,
+    borderRadius: 2,
+    opacity: 0.8,
   },
   recordingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
+    gap: 8,
   },
   recordingDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#f44336',
-    marginRight: 8,
-    animation: 'pulse',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: theme.colors.error,
   },
   recordingText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#f44336',
+    color: theme.colors.error,
   },
   recordedLabel: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
     marginBottom: 12,
   },
   duration: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: '700',
-    color: '#2196F3',
+    color: theme.colors.secondary,
+    fontFamily: theme.fonts.mono,
   },
   noAudioText: {
     fontSize: 14,
-    color: '#999',
-    marginTop: 16,
+    color: 'rgba(255,255,255,0.4)',
+    marginTop: 8,
+    textAlign: 'center',
   },
-  infoBox: {
-    backgroundColor: '#e3f2fd',
+  locationBadge: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 8,
-    padding: 12,
-    marginVertical: 16,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  infoText: {
-    fontSize: 14,
-    color: '#1565c0',
+  locationText: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
   },
-  actions: {
-    gap: 12,
-  },
-  largeButton: {
-    paddingVertical: 16,
-    borderRadius: 10,
+  actions: { gap: 12 },
+  recordButton: {
+    backgroundColor: 'rgba(45, 80, 22, 0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    paddingVertical: 20,
+    borderRadius: 16,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
+    gap: 8,
   },
-  recordButton: {
-    backgroundColor: '#2196F3',
+  recordButtonDone: {
+    borderColor: theme.colors.primary,
+    opacity: 0.7,
   },
-  stopButton: {
-    backgroundColor: '#f44336',
+  recordIcon: { fontSize: 24 },
+  recordButtonText: {
+    color: theme.colors.text,
+    fontSize: 16,
+    fontWeight: '600',
   },
   primaryButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: theme.colors.secondary,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.background,
   },
   secondaryButton: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1.5,
-    borderColor: '#999',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
   },
-  buttonIcon: {
-    fontSize: 20,
-    marginRight: 8,
+  secondaryButtonText: { color: theme.colors.text, fontSize: 16, fontWeight: '600' },
+  buttonDisabled: { opacity: 0.5 },
+  stopButton: {
+    backgroundColor: theme.colors.error,
+    paddingVertical: 20,
+    borderRadius: 50,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
   },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButtonText: {
-    color: '#999',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  tipBox: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 16,
-    marginTop: 16,
-  },
-  tipTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  tipText: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 20,
-  },
+  stopIcon: { fontSize: 22, color: '#fff' },
+  stopButtonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
 });

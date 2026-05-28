@@ -9,13 +9,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./types": "./dist/types/index.d.ts",
-    "./store": "./dist/store/index.d.ts",
-    "./services": "./dist/services/index.d.ts",
-    "./hooks": "./dist/hooks/index.d.ts",
-    "./utils": "./dist/utils/index.d.ts",
-    "./babylon": "./dist/babylon/index.d.ts"
+    }
   },
   "scripts": {
     "build": "tsc",

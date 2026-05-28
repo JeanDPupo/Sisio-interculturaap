@@ -21,6 +21,9 @@
     "@emotion/styled": "^11.11.0",
     "leaflet": "^1.9.0",
     "react-leaflet": "^4.2.0",
+    "framer-motion": "^11.0.0",
+    "recharts": "^2.12.0",
+    "@tanstack/react-query": "^5.0.0",
     "@sisio/shared": "workspace:*"
   },
   "devDependencies": {

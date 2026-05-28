@@ -1,27 +1,84 @@
-import { colors } from '@sisio/shared';
+import { colors as sharedColors } from '@sisio/shared';
+
+const lightTheme = {
+  colors: {
+    foreground: sharedColors.negroSelva,
+    background: sharedColors.blancoNiebla,
+    muted: '#7A8C7A',
+    card: 'rgba(45, 80, 22, 0.05)',
+    cardBorder: 'rgba(45, 80, 22, 0.1)',
+    border: 'rgba(45, 80, 22, 0.15)',
+
+    // Primary (Verde Selva)
+    primary: sharedColors.verdeSelva,
+    primaryLight: sharedColors.verdeHoja,
+    primaryDark: '#1a3a0f',
+
+    // Secondary (Azul)
+    secondary: sharedColors.azulCielo,
+    secondaryLight: sharedColors.azulClaro,
+    secondaryDark: sharedColors.azulNoche,
+
+    // Accent (Oro)
+    accent: sharedColors.oroIndigena,
+    accentLight: sharedColors.ambarSolar,
+    accentDark: '#B8860B',
+
+    // Risk colors
+    success: sharedColors.riesgoBajo,
+    warning: sharedColors.riesgoMedio,
+    danger: sharedColors.riesgoAlto,
+
+    // Backdrop
+    backdrop: 'rgba(13, 27, 15, 0.4)',
+  },
+};
+
+const darkTheme = {
+  colors: {
+    foreground: sharedColors.blancoNiebla,
+    background: sharedColors.negroSelva,
+    muted: '#8B9D8B',
+    card: 'rgba(255, 255, 255, 0.05)',
+    cardBorder: 'rgba(255, 255, 255, 0.08)',
+    border: 'rgba(255, 255, 255, 0.1)',
+
+    // Primary (Verde Selva)
+    primary: sharedColors.verdeSelva,
+    primaryLight: sharedColors.verdeHoja,
+    primaryDark: '#1a3a0f',
+
+    // Secondary (Azul)
+    secondary: sharedColors.azulCielo,
+    secondaryLight: '#64B5F6',
+    secondaryDark: sharedColors.azulNoche,
+
+    // Accent (Oro)
+    accent: sharedColors.oroIndigena,
+    accentLight: sharedColors.ambarSolar,
+    accentDark: '#B8860B',
+
+    // Risk colors
+    success: sharedColors.riesgoBajo,
+    warning: sharedColors.riesgoMedio,
+    danger: sharedColors.riesgoAlto,
+
+    // Backdrop
+    backdrop: 'rgba(255, 255, 255, 0.1)',
+  },
+};
+
+export { lightTheme, darkTheme };
 
 export const theme = {
   dark: true,
-  colors: {
-    primary: colors.verdeSelva,
-    secondary: colors.oroIndigena,
-    background: colors.negroSelva,
-    surface: '#1a2e1e',
-    surfaceLight: '#243a28',
-    text: colors.blancoNiebla,
-    textSecondary: '#b0c4a0',
-    accent: colors.ambarSolar,
-    error: colors.riesgoAlto,
-    warning: colors.riesgoMedio,
-    success: colors.riesgoBajo,
-    border: 'rgba(255,255,255,0.1)',
-    card: 'rgba(255,255,255,0.05)',
-  },
+  colors: darkTheme.colors,
   fonts: {
     display: 'PlayfairDisplay_700Bold',
     native: 'Lora_400Regular',
     body: 'Inter_400Regular',
     bodySemiBold: 'Inter_600SemiBold',
+    bodyBold: 'Inter_700Bold',
     mono: 'JetBrainsMono_400Regular',
   },
   spacing: {
@@ -30,28 +87,45 @@ export const theme = {
     md: 16,
     lg: 24,
     xl: 32,
+    xxl: 40,
   },
   borderRadius: {
     sm: 8,
     md: 12,
-    lg: 20,
-    xl: 24,
+    lg: 16,
+    xl: 20,
+    xxl: 24,
+  },
+  shadows: {
+    sm: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 1.41,
+      elevation: 2,
+    },
+    md: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    lg: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4.65,
+      elevation: 8,
+    },
   },
 };
 
 export const tabBarStyle = {
-  backgroundColor: theme.colors.surface,
+  backgroundColor: theme.colors.card,
   borderTopColor: theme.colors.border,
   borderTopWidth: 1,
   height: 60,
   paddingBottom: 8,
   paddingTop: 4,
-};
-
-export const glassCard = {
-  backgroundColor: theme.colors.card,
-  backdropFilter: 'blur(20px)',
-  borderWidth: 1,
-  borderColor: theme.colors.border,
-  borderRadius: theme.borderRadius.lg,
 };

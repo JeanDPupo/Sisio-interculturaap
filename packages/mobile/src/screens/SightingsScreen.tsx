@@ -9,15 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useAuth, useSightings } from '@sisio/shared';
-
-interface SightingItem {
-  id: string;
-  bird_id: string;
-  bird_name: string;
-  created_at: string;
-  confidence: number;
-  location?: string;
-}
+import { theme } from '../theme';
 
 export const SightingsScreen = ({ navigation }: any) => {
   const { user } = useAuth();
@@ -25,27 +17,18 @@ export const SightingsScreen = ({ navigation }: any) => {
   const [groupedSightings, setGroupedSightings] = useState<any>({});
 
   useEffect(() => {
-    if (user?.id) {
-      getSightings(user.id);
-    }
+    if (user?.id) getSightings(user.id);
   }, [user?.id]);
 
   useEffect(() => {
-    // Group sightings by date
     const grouped: any = {};
     sightings.forEach((sighting: any) => {
       const date = new Date(sighting.created_at).toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+        year: 'numeric', month: 'long', day: 'numeric',
       });
-
-      if (!grouped[date]) {
-        grouped[date] = [];
-      }
+      if (!grouped[date]) grouped[date] = [];
       grouped[date].push(sighting);
     });
-
     setGroupedSightings(grouped);
   }, [sightings]);
 
@@ -54,16 +37,21 @@ export const SightingsScreen = ({ navigation }: any) => {
       key={sighting.id}
       style={styles.sightingCard}
       onPress={() => navigation.navigate('BirdDetail', { sightingId: sighting.id })}
+      activeOpacity={0.7}
     >
       <View style={styles.cardContent}>
-        <View>
-          <Text style={styles.birdName}>{sighting.bird_name || 'Ave desconocida'}</Text>
-          <Text style={styles.timestamp}>
-            {new Date(sighting.created_at).toLocaleTimeString('es-ES', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </Text>
+        <View style={styles.cardLeft}>
+          <View style={styles.cardIcon}>
+            <Text style={{ fontSize: 18 }}>🦅</Text>
+          </View>
+          <View>
+            <Text style={styles.birdName}>{sighting.bird_name || 'Ave desconocida'}</Text>
+            <Text style={styles.timestamp}>
+              {new Date(sighting.created_at).toLocaleTimeString('es-ES', {
+                hour: '2-digit', minute: '2-digit',
+              })}
+            </Text>
+          </View>
         </View>
         <View style={styles.confidenceBadge}>
           <Text style={styles.confidenceText}>
@@ -78,7 +66,7 @@ export const SightingsScreen = ({ navigation }: any) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={theme.colors.secondary} />
         </View>
       </SafeAreaView>
     );
@@ -91,14 +79,13 @@ export const SightingsScreen = ({ navigation }: any) => {
           <Text style={styles.emptyIcon}>🦅</Text>
           <Text style={styles.emptyTitle}>Sin avistamientos aún</Text>
           <Text style={styles.emptyText}>
-            Vuelve a la pantalla de inicio y captura fotos o audios de aves para crear tu primer
-            avistamiento
+            Captura fotos o audios de aves para crear tu primer avistamiento
           </Text>
           <TouchableOpacity
-            style={styles.button}
+            style={styles.primaryButton}
             onPress={() => navigation.navigate('Home')}
           >
-            <Text style={styles.buttonText}>Empezar Ahora</Text>
+            <Text style={styles.primaryButtonText}>Empezar Ahora</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -108,25 +95,23 @@ export const SightingsScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Mis Avistamientos</Text>
-        <Text style={styles.count}>{sightings.length}</Text>
+        <Text style={styles.title}>Avistamientos</Text>
+        <View style={styles.countBadge}>
+          <Text style={styles.countText}>{sightings.length}</Text>
+        </View>
       </View>
-
       <FlatList
-        data={Object.entries(groupedSightings).sort((a, b) => {
-          const dateA = new Date(a[0]);
-          const dateB = new Date(b[0]);
-          return dateB.getTime() - dateA.getTime();
+        data={Object.entries(groupedSightings).sort((a: any, b: any) => {
+          return new Date(b[0]).getTime() - new Date(a[0]).getTime();
         })}
-        keyExtractor={([date]) => date}
-        renderItem={({ item: [date, dateSightings] }) => (
+        keyExtractor={([date]: any) => date}
+        renderItem={({ item: [date, dateSightings] }: any) => (
           <View style={styles.dateGroup}>
             <Text style={styles.dateHeader}>{date}</Text>
             {dateSightings.map((sighting: any) => renderSightingCard(sighting))}
           </View>
         )}
         contentContainerStyle={styles.listContent}
-        scrollEnabled
       />
     </SafeAreaView>
   );
@@ -135,7 +120,7 @@ export const SightingsScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafafa',
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -143,72 +128,85 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
-    color: '#333',
+    color: theme.colors.text,
+    fontFamily: theme.fonts.display,
   },
-  count: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2196F3',
-    backgroundColor: '#e3f2fd',
+  countBadge: {
+    backgroundColor: theme.colors.secondary,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 4,
     borderRadius: 20,
+  },
+  countText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.colors.background,
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   dateGroup: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   dateHeader: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#999',
-    marginBottom: 12,
+    color: theme.colors.textSecondary,
+    marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   sightingCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    padding: 12,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 14,
+    padding: 14,
     marginBottom: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#2196F3',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   cardContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  cardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  cardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(212, 160, 23, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   birdName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    color: theme.colors.text,
+    marginBottom: 2,
   },
   timestamp: {
     fontSize: 12,
-    color: '#999',
+    color: theme.colors.textSecondary,
   },
   confidenceBadge: {
-    backgroundColor: '#e8f5e9',
-    paddingHorizontal: 8,
+    backgroundColor: 'rgba(212, 160, 23, 0.15)',
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 16,
   },
   confidenceText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#2e7d32',
+    fontWeight: '700',
+    color: theme.colors.secondary,
   },
   loadingContainer: {
     flex: 1,
@@ -221,33 +219,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
+  emptyIcon: { fontSize: 64, marginBottom: 16 },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.text,
     marginBottom: 8,
     textAlign: 'center',
   },
   emptyText: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
   },
-  button: {
-    backgroundColor: '#2196F3',
+  primaryButton: {
+    backgroundColor: theme.colors.secondary,
     paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
   },
-  buttonText: {
-    color: '#ffffff',
+  primaryButtonText: {
+    color: theme.colors.background,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

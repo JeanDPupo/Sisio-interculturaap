@@ -1,0 +1,101 @@
+{
+  "name": "Sisio - Documentar y Proteger Biodiversidad Local",
+  "short_name": "Sisio",
+  "description": "Una plataforma para documentar y proteger la biodiversidad local con el saber ancestral de comunidades indígenas. Identifica aves con fotos y sonidos, visualiza avistamientos en mapas.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#2196F3",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/logo.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Fotografía",
+      "short_name": "Foto",
+      "description": "Identifica un ave con una fotografía",
+      "url": "/photo-upload",
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Sonido",
+      "short_name": "Audio",
+      "description": "Identifica un ave por su canto",
+      "url": "/audio-upload",
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Avistamientos",
+      "short_name": "Mapa",
+      "description": "Visualiza avistamientos en el mapa",
+      "url": "/sightings",
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "share_target": {
+    "action": "/photo-upload",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "media",
+          "accept": ["image/*", "audio/*"]
+        }
+      ]
+    }
+  }
+}

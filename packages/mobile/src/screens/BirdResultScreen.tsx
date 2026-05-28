@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useBirdStore, useAuth, useSightings } from '@sisio/shared';
+import { theme } from '../theme';
 
 export const BirdResultScreen = ({ navigation }: any) => {
   const { identificationResult } = useBirdStore();
@@ -20,12 +22,10 @@ export const BirdResultScreen = ({ navigation }: any) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
+          <Text style={styles.errorIcon}>🦅</Text>
           <Text style={styles.errorText}>No hay resultado de identificación</Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.buttonText}>Volver</Text>
+          <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.primaryButtonText}>Volver</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -34,6 +34,12 @@ export const BirdResultScreen = ({ navigation }: any) => {
 
   const bird = identificationResult.bird;
   const confidence = identificationResult.confidence || 0;
+  const riskColor =
+    bird.ecosistema_riesgo === 'alto'
+      ? theme.colors.error
+      : bird.ecosistema_riesgo === 'medio'
+        ? theme.colors.warning
+        : theme.colors.success;
 
   const handleSaveSighting = async () => {
     setSaving(true);
@@ -43,117 +49,114 @@ export const BirdResultScreen = ({ navigation }: any) => {
         user_id: user?.id,
         confidence: confidence,
         ecosystem_risk: bird.ecosistema_riesgo,
-      });
+      } as any);
       alert('Avistamiento guardado');
       navigation.replace('Main');
-    } catch (error) {
-      alert('Error al guardar avistamiento');
-    } finally {
-      setSaving(false);
-    }
+    } catch { alert('Error al guardar avistamiento'); }
+    finally { setSaving(false); }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Atrás</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Resultado</Text>
+        <View style={styles.backBtn} />
       </View>
-
       <ScrollView style={styles.content}>
-        <View style={styles.birdCard}>
-          <Text style={styles.icon}>🦅</Text>
+        <View style={styles.revealCard}>
+          {bird.imagen_url ? (
+            <Image source={{ uri: bird.imagen_url }} style={styles.birdImage} />
+          ) : (
+            <Text style={styles.birdEmoji}>🦅</Text>
+          )}
           <Text style={styles.birdName}>{bird.nombre_espanol || bird.nombre_cientifico}</Text>
           <Text style={styles.scientificName}>{bird.nombre_cientifico}</Text>
-
           {bird.nombre_nativo && (
             <Text style={styles.nativeName}>
-              Nombre nativo: {bird.nombre_nativo} ({bird.lengua})
+              {bird.nombre_nativo} ({bird.lengua})
             </Text>
           )}
-
           <View style={styles.confidenceContainer}>
-            <Text style={styles.label}>Confianza</Text>
-            <View style={styles.confidenceBar}>
+            <Text style={styles.confidenceLabel}>Confianza de identificación</Text>
+            <View style={styles.confidenceBarBg}>
               <View
                 style={[
                   styles.confidenceProgress,
-                  { width: `${confidence * 100}%` }
+                  { width: `${confidence * 100}%`, backgroundColor: theme.colors.secondary },
                 ]}
               />
             </View>
-            <Text style={styles.confidenceText}>{Math.round(confidence * 100)}%</Text>
-          </View>
-
-          {bird.significado_ancestral && (
-            <View style={styles.ancestralBox}>
-              <Text style={styles.sectionTitle}>📖 Significado Ancestral</Text>
-              <Text style={styles.ancestralText}>{bird.significado_ancestral}</Text>
-            </View>
-          )}
-
-          {bird.rol_cosmovision && (
-            <View style={styles.ancestralBox}>
-              <Text style={styles.sectionTitle}>🌍 Rol en la Cosmovision</Text>
-              <Text style={styles.ancestralText}>{bird.rol_cosmovision}</Text>
-            </View>
-          )}
-
-          {bird.historias_ancestrales?.length > 0 && (
-            <View style={styles.ancestralBox}>
-              <Text style={styles.sectionTitle}>📚 Historias</Text>
-              {bird.historias_ancestrales.map((historia, idx) => (
-                <Text key={idx} style={styles.ancestralText}>
-                  • {historia}
-                </Text>
-              ))}
-            </View>
-          )}
-
-          {bird.comportamientos && (
-            <View style={styles.infoBox}>
-              <Text style={styles.label}>Comportamiento</Text>
-              <Text style={styles.infoText}>{bird.comportamientos}</Text>
-            </View>
-          )}
-
-          {bird.habitat && (
-            <View style={styles.infoBox}>
-              <Text style={styles.label}>Hábitat</Text>
-              <Text style={styles.infoText}>{bird.habitat}</Text>
-            </View>
-          )}
-
-          <View style={styles.riskBadge} style={[
-            styles.riskBadge,
-            bird.ecosistema_riesgo === 'alto' && styles.riskHigh,
-            bird.ecosistema_riesgo === 'medio' && styles.riskMedium,
-            bird.ecosistema_riesgo === 'bajo' && styles.riskLow,
-          ]}>
-            <Text style={styles.riskText}>
-              Riesgo ecosistema: {bird.ecosistema_riesgo.toUpperCase()}
+            <Text style={styles.confidenceValue}>
+              {Math.round(confidence * 100)}%
             </Text>
           </View>
+        </View>
+
+        {bird.significado_ancestral && (
+          <View style={[styles.sectionCard, styles.sectionSignificado]}>
+            <Text style={styles.sectionIcon}>🪶</Text>
+            <Text style={styles.sectionTitle}>Significado Ancestral</Text>
+            <Text style={styles.sectionText}>{bird.significado_ancestral}</Text>
+          </View>
+        )}
+
+        {bird.rol_cosmovision && (
+          <View style={[styles.sectionCard, styles.sectionCosmovision]}>
+            <Text style={styles.sectionIcon}>🌞</Text>
+            <Text style={styles.sectionTitle}>Rol en la Cosmovisión</Text>
+            <Text style={styles.sectionText}>{bird.rol_cosmovision}</Text>
+          </View>
+        )}
+
+        {bird.historias_ancestrales?.length > 0 && (
+          <View style={[styles.sectionCard, styles.sectionHistorias]}>
+            <Text style={styles.sectionIcon}>📚</Text>
+            <Text style={styles.sectionTitle}>Historias Ancestrales</Text>
+            {bird.historias_ancestrales.map((historia, idx) => (
+              <Text key={idx} style={styles.historiaItem}>
+                • {historia}
+              </Text>
+            ))}
+          </View>
+        )}
+
+        {bird.habitat && (
+          <View style={[styles.sectionCard, styles.sectionHabitat]}>
+            <Text style={styles.sectionIcon}>🌿</Text>
+            <Text style={styles.sectionTitle}>Hábitat</Text>
+            <Text style={styles.sectionText}>{bird.habitat}</Text>
+          </View>
+        )}
+
+        {bird.comportamientos && (
+          <View style={[styles.sectionCard, styles.sectionComportamiento]}>
+            <Text style={styles.sectionIcon}>🦜</Text>
+            <Text style={styles.sectionTitle}>Comportamiento</Text>
+            <Text style={styles.sectionText}>{bird.comportamientos}</Text>
+          </View>
+        )}
+
+        <View style={[styles.riskBadge, { backgroundColor: riskColor + '20', borderColor: riskColor }]}>
+          <Text style={[styles.riskText, { color: riskColor }]}>
+            Riesgo ecológico: {bird.ecosistema_riesgo.toUpperCase()}
+          </Text>
         </View>
       </ScrollView>
 
       <View style={styles.actions}>
-        <TouchableOpacity
-          style={[styles.button, styles.secondaryButton]}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.goBack()}>
           <Text style={styles.secondaryButtonText}>Descartar</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
-          style={[styles.button, styles.primaryButton, saving && styles.buttonDisabled]}
+          style={[styles.primaryButton, saving && styles.buttonDisabled]}
           onPress={handleSaveSighting}
           disabled={saving}
         >
           {saving ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={theme.colors.background} />
           ) : (
             <Text style={styles.primaryButtonText}>Guardar Avistamiento</Text>
           )}
@@ -166,140 +169,146 @@ export const BirdResultScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafafa',
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
-  backButton: {
-    fontSize: 16,
-    color: '#2196F3',
-    fontWeight: '500',
-    marginRight: 12,
-  },
+  backBtn: { width: 40 },
+  backArrow: { fontSize: 32, color: theme.colors.text, fontWeight: '300' },
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
-  birdCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-  },
-  icon: {
-    fontSize: 64,
+    color: theme.colors.text,
     textAlign: 'center',
+  },
+  content: { flex: 1, padding: 16 },
+  revealCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  birdImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
     marginBottom: 16,
   },
+  birdEmoji: { fontSize: 80, marginBottom: 16 },
   birdName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '700',
+    color: theme.colors.text,
     textAlign: 'center',
-    marginBottom: 8,
+    fontFamily: theme.fonts.display,
+    marginBottom: 4,
   },
   scientificName: {
     fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
+    color: theme.colors.textSecondary,
     fontStyle: 'italic',
-    marginBottom: 12,
-  },
-  nativeName: {
-    fontSize: 13,
-    color: '#666',
     textAlign: 'center',
-    marginBottom: 20,
-    fontWeight: '500',
-  },
-  confidenceContainer: {
-    marginBottom: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
   },
-  confidenceBar: {
-    height: 8,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 4,
+  nativeName: {
+    fontSize: 16,
+    color: theme.colors.secondary,
+    textAlign: 'center',
+    fontFamily: theme.fonts.native,
+    fontWeight: '600',
+    marginBottom: 20,
+  },
+  confidenceContainer: {
+    width: '100%',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+    paddingTop: 16,
+  },
+  confidenceLabel: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginBottom: 8,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  confidenceBarBg: {
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 3,
     overflow: 'hidden',
     marginBottom: 8,
   },
-  confidenceProgress: {
-    height: '100%',
-    backgroundColor: '#4CAF50',
-  },
-  confidenceText: {
+  confidenceProgress: { height: '100%', borderRadius: 3 },
+  confidenceValue: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#4CAF50',
+    fontWeight: '700',
+    color: theme.colors.secondary,
+    textAlign: 'center',
   },
-  ancestralBox: {
-    backgroundColor: '#fff3e0',
-    borderLeftWidth: 4,
-    borderLeftColor: '#ff9800',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+  sectionCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
   },
-  ancestralText: {
-    fontSize: 14,
-    color: '#e65100',
-    lineHeight: 20,
+  sectionSignificado: {
+    backgroundColor: 'rgba(255, 152, 0, 0.08)',
+    borderColor: 'rgba(255, 152, 0, 0.3)',
   },
+  sectionCosmovision: {
+    backgroundColor: 'rgba(76, 175, 80, 0.08)',
+    borderColor: 'rgba(76, 175, 80, 0.3)',
+  },
+  sectionHistorias: {
+    backgroundColor: 'rgba(33, 150, 243, 0.08)',
+    borderColor: 'rgba(33, 150, 243, 0.3)',
+  },
+  sectionHabitat: {
+    backgroundColor: 'rgba(139, 195, 74, 0.08)',
+    borderColor: 'rgba(139, 195, 74, 0.3)',
+  },
+  sectionComportamiento: {
+    backgroundColor: 'rgba(156, 39, 176, 0.08)',
+    borderColor: 'rgba(156, 39, 176, 0.3)',
+  },
+  sectionIcon: { fontSize: 24, marginBottom: 8 },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#e65100',
+    fontSize: 15,
+    fontWeight: '700',
+    color: theme.colors.text,
     marginBottom: 8,
   },
-  infoBox: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingBottom: 16,
-    marginBottom: 16,
-  },
-  infoText: {
+  sectionText: {
     fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
+    color: theme.colors.textSecondary,
+    lineHeight: 22,
+  },
+  historiaItem: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    lineHeight: 22,
+    marginBottom: 4,
   },
   riskBadge: {
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  riskLow: {
-    backgroundColor: '#c8e6c9',
-  },
-  riskMedium: {
-    backgroundColor: '#ffe0b2',
-  },
-  riskHigh: {
-    backgroundColor: '#ffcdd2',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    alignItems: 'center',
   },
   riskText: {
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: '700',
+    fontSize: 13,
+    letterSpacing: 1,
   },
   errorContainer: {
     flex: 1,
@@ -307,47 +316,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
+  errorIcon: { fontSize: 64, marginBottom: 16 },
   errorText: {
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
-  },
-  button: {
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  primaryButton: {
-    backgroundColor: '#2196F3',
-    flex: 1,
-    marginLeft: 8,
-  },
-  primaryButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1.5,
-    borderColor: '#2196F3',
-    flex: 1,
-  },
-  secondaryButtonText: {
-    color: '#2196F3',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
   },
   actions: {
     flexDirection: 'row',
     padding: 16,
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
     gap: 8,
   },
+  primaryButton: {
+    backgroundColor: theme.colors.secondary,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    flex: 1,
+  },
+  primaryButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.background,
+  },
+  secondaryButton: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    flex: 1,
+  },
+  secondaryButtonText: { color: theme.colors.text, fontSize: 16, fontWeight: '600' },
+  buttonDisabled: { opacity: 0.5 },
 });

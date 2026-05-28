@@ -1,0 +1,10 @@
+export declare const formatDate: (dateString: string | Date, locale?: string) => string;
+export declare const formatDateTime: (dateString: string | Date, locale?: string) => string;
+export declare const formatTimeAgo: (dateString: string | Date, locale?: string) => string;
+export declare const formatCoordinates: (latitude: number, longitude: number) => string;
+export declare const formatConfidence: (confidence: number) => string;
+export declare const truncateText: (text: string, maxLength?: number) => string;
+export declare const capitalize: (text: string) => string;
+export declare const formatFileSize: (bytes: number) => string;
+export declare const slugify: (text: string) => string;
+//# sourceMappingURL=formatting.d.ts.map

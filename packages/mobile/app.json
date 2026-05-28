@@ -3,7 +3,9 @@
     "name": "Sisio",
     "slug": "sisio",
     "version": "0.1.0",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTabletMode": true,
       "infoPlist": {
@@ -22,6 +24,8 @@
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
       ]
+    },
+    "extra": {
     },
     "plugins": [
       [
@@ -43,7 +47,9 @@
           "locationAlwaysPermission": "La app necesita tu ubicación.",
           "locationWhenInUsePermission": "La app necesita tu ubicación para registrar dónde viste el ave."
         }
-      ]
+      ],
+      "expo-font",
+      "expo-asset"
     ]
   }
 }

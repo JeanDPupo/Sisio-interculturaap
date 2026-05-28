@@ -8,6 +8,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useAuthStore, useOfflineStore } from '@sisio/shared';
+import { theme } from '../theme';
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user, isGuest } = useAuthStore();
@@ -19,73 +20,96 @@ export const HomeScreen = ({ navigation }: any) => {
       {!isOnline && (
         <View style={styles.offlineBanner}>
           <Text style={styles.offlineText}>
-            📴 Sin conexión ({queueStats.total} elementos en cola)
+            Sin conexión ({queueStats.total} elementos en cola)
           </Text>
         </View>
       )}
-
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
+        <View style={styles.heroSection}>
           <Text style={styles.greeting}>
-            Hola {user?.name || 'Visitante'}! 👋
+            Hola{'\n'}
+            <Text style={styles.greetingName}>{user?.name || 'Visitante'}</Text>
           </Text>
-          <Text style={styles.subtitle}>
+          <Text style={styles.heroSubtitle}>
             {isGuest
-              ? 'Inicia sesión para guardar tus avistamientos'
-              : 'Bienvenido de vuelta'}
+              ? 'Explora el conocimiento ancestral de la Sierra Nevada'
+              : 'Bienvenido a la memoria viva de las aves'}
           </Text>
         </View>
 
-        <View style={styles.mainActions}>
+        <View style={styles.actionsContainer}>
           <TouchableOpacity
-            style={styles.actionCard}
+            style={[styles.actionCard, styles.actionPhoto]}
             onPress={() => navigation.navigate('PhotoCapture')}
+            activeOpacity={0.8}
           >
-            <Text style={styles.actionIcon}>📸</Text>
-            <Text style={styles.actionTitle}>Fotografía</Text>
-            <Text style={styles.actionDesc}>Identifica un ave con una foto</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('AudioCapture')}
-          >
-            <Text style={styles.actionIcon}>🎵</Text>
-            <Text style={styles.actionTitle}>Sonido</Text>
-            <Text style={styles.actionDesc}>Identifica por el canto del ave</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.quickLinks}>
-          <TouchableOpacity
-            style={styles.linkButton}
-            onPress={() => navigation.navigate('Sightings')}
-          >
-            <Text style={styles.linkIcon}>📝</Text>
-            <View style={styles.linkContent}>
-              <Text style={styles.linkTitle}>Mis Avistamientos</Text>
-              <Text style={styles.linkDesc}>Ver tus observaciones</Text>
+            <View style={styles.actionGradient}>
+              <Text style={styles.actionIcon}>📷</Text>
+              <Text style={styles.actionTitle}>Identificar por Foto</Text>
+              <Text style={styles.actionDesc}>
+                Captura una foto del ave y descubre su identidad
+              </Text>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.linkButton}
+            style={[styles.actionCard, styles.actionAudio]}
+            onPress={() => navigation.navigate('AudioCapture')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.actionGradient}>
+              <Text style={styles.actionIcon}>🎤</Text>
+              <Text style={styles.actionTitle}>Identificar por Sonido</Text>
+              <Text style={styles.actionDesc}>
+                Graba el canto del ave para reconocerla
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.sectionTitle}>Acceso Rápido</Text>
+        <View style={styles.quickLinks}>
+          <TouchableOpacity
+            style={styles.linkCard}
+            onPress={() => navigation.navigate('Sightings')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.linkIcon}>📝</Text>
+            <View style={styles.linkContent}>
+              <Text style={styles.linkTitle}>Avistamientos</Text>
+              <Text style={styles.linkDesc}>Tus observaciones guardadas</Text>
+            </View>
+            <Text style={styles.linkArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.linkCard}
             onPress={() => navigation.navigate('Map')}
+            activeOpacity={0.7}
           >
             <Text style={styles.linkIcon}>🗺️</Text>
             <View style={styles.linkContent}>
               <Text style={styles.linkTitle}>Mapa</Text>
-              <Text style={styles.linkDesc}>Ubicación de avistamientos</Text>
+              <Text style={styles.linkDesc}>Avistamientos cercanos</Text>
             </View>
+            <Text style={styles.linkArrow}>›</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>💡 Consejo</Text>
-          <Text style={styles.infoText}>
-            El conocimiento ancestral de las comunidades indígenas es prioritario. Aprende
-            las historias y significados de cada ave en tu territorio.
+        <Text style={styles.sectionTitle}>Conocimiento Ancestral</Text>
+        <View style={styles.ancestralCard}>
+          <Text style={styles.ancestralTitle}>📖 Sabiduría Arhuaco</Text>
+          <Text style={styles.ancestralText}>
+            Cada ave en la Sierra Nevada tiene un propósito en el tejido de la
+            vida. Las comunidades indígenas han preservado este conocimiento por
+            generaciones.
           </Text>
+          <View style={styles.communitiesRow}>
+            {['Arhuaco', 'Kogui', 'Wiwa', 'Kankuamo'].map((com) => (
+              <View key={com} style={styles.communityChip}>
+                <Text style={styles.communityChipText}>{com}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -95,16 +119,16 @@ export const HomeScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafafa',
+    backgroundColor: theme.colors.background,
   },
   offlineBanner: {
-    backgroundColor: '#f44336',
+    backgroundColor: theme.colors.error,
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
   offlineText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -112,101 +136,138 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 20,
   },
-  header: {
+  heroSection: {
     marginBottom: 28,
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
+    fontSize: 28,
+    fontWeight: '300',
+    color: theme.colors.text,
+    lineHeight: 38,
   },
-  subtitle: {
+  greetingName: {
+    fontWeight: '700',
+    color: theme.colors.secondary,
+    fontFamily: theme.fonts.display,
+    fontSize: 36,
+  },
+  heroSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
+    marginTop: 8,
+    lineHeight: 20,
   },
-  mainActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
+  actionsContainer: {
     gap: 12,
+    marginBottom: 28,
   },
   actionCard: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  actionPhoto: {
+    backgroundColor: 'rgba(45, 80, 22, 0.3)',
+  },
+  actionAudio: {
+    backgroundColor: 'rgba(212, 160, 23, 0.15)',
+  },
+  actionGradient: {
+    padding: 20,
   },
   actionIcon: {
-    fontSize: 40,
+    fontSize: 32,
     marginBottom: 8,
   },
   actionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text,
     marginBottom: 4,
   },
   actionDesc: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    lineHeight: 18,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: 12,
+    letterSpacing: 0.5,
   },
   quickLinks: {
     gap: 8,
-    marginBottom: 24,
+    marginBottom: 28,
   },
-  linkButton: {
+  linkCard: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    padding: 12,
     alignItems: 'center',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   linkIcon: {
-    fontSize: 24,
+    fontSize: 22,
     marginRight: 12,
   },
   linkContent: {
     flex: 1,
   },
   linkTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
+    marginBottom: 2,
   },
   linkDesc: {
     fontSize: 12,
-    color: '#999',
-    marginTop: 2,
+    color: theme.colors.textSecondary,
   },
-  infoBox: {
-    backgroundColor: '#e3f2fd',
-    borderLeftWidth: 4,
-    borderLeftColor: '#2196F3',
-    borderRadius: 8,
-    padding: 12,
+  linkArrow: {
+    fontSize: 22,
+    color: theme.colors.textSecondary,
   },
-  infoTitle: {
+  ancestralCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 20,
+  },
+  ancestralTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.secondary,
+    marginBottom: 8,
+  },
+  ancestralText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1976d2',
-    marginBottom: 4,
+    color: theme.colors.textSecondary,
+    lineHeight: 22,
+    marginBottom: 16,
   },
-  infoText: {
-    fontSize: 13,
-    color: '#1565c0',
-    lineHeight: 18,
+  communitiesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  communityChip: {
+    backgroundColor: 'rgba(212, 160, 23, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 160, 23, 0.3)',
+  },
+  communityChipText: {
+    fontSize: 12,
+    color: theme.colors.secondary,
+    fontWeight: '500',
   },
 });
