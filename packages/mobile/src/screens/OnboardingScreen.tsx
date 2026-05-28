@@ -1,59 +1,80 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  TouchableOpacity,
   ScrollView,
+  TouchableOpacity,
   Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
-  TextInput,
   KeyboardAvoidingView,
+  TextInput,
+  SafeAreaView,
 } from 'react-native';
+import Animated, {
+  FadeIn,
+  FadeInUp,
+  ZoomIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  withRepeat,
+  withSpring,
+  interpolate,
+  Extrapolate,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { Feather } from '@expo/vector-icons';
 import { useAuthStore, apiService } from '@sisio/shared';
-import { theme } from '../theme';
+import { Button, GlassCard } from '../components';
+import { useThemeColor } from '../hooks';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const slides = [
   {
     id: 1,
-    icon: '🦅',
     title: 'Sisio',
-    subtitle: 'Conocimiento Ancestral de la Sierra Nevada',
+    subtitle: 'Conocimiento Ancestral',
     description:
-      'Descubre la sabiduría de las comunidades Arhuaco, Kogui, Wiwa y Kankuamo sobre las aves de tu territorio.',
+      'La sabiduría de los pueblos Arhuaco, Kogui, Wiwa y Kankuamo sobre las aves de la Sierra Nevada',
+    gradient: ['rgba(45, 80, 22, 0.3)', 'rgba(74, 124, 47, 0.1)'],
   },
   {
     id: 2,
-    icon: '📖',
-    title: 'Identifica y Aprende',
+    title: 'Identifica & Aprende',
     subtitle: 'Cada ave tiene una historia',
     description:
-      'Toma una foto o graba su canto para identificar especies y conocer su significado ancestral, rol en la cosmovisión y las historias que las rodean.',
+      'Captura una foto o graba el canto para descubrir la identidad y el significado ancestral',
+    gradient: ['rgba(212, 160, 23, 0.3)', 'rgba(245, 200, 66, 0.1)'],
   },
   {
     id: 3,
-    icon: '🌿',
     title: 'Preserva la Cultura',
     subtitle: 'Sé parte de la memoria viva',
     description:
-      'Contribuye a la preservación del conocimiento indígena mientras exploras la riqueza natural de la Sierra Nevada.',
+      'Contribuye a la preservación del conocimiento indígena mientras exploras la naturaleza',
+    gradient: ['rgba(46, 125, 154, 0.3)', 'rgba(100, 181, 246, 0.1)'],
   },
 ];
 
 export const OnboardingScreen = ({ navigation }: any) => {
+  const { colors, isDark } = useThemeColor();
   const scrollRef = useRef<ScrollView>(null);
+  const { guestLogin } = useAuthStore();
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
-  const { guestLogin } = useAuthStore();
+
+  const scrollX = useSharedValue(0);
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const slide = Math.round(e.nativeEvent.contentOffset.x / width);
     setCurrentSlide(slide);
+    scrollX.value = e.nativeEvent.contentOffset.x;
   };
 
   const handleNext = () => {
@@ -80,69 +101,38 @@ export const OnboardingScreen = ({ navigation }: any) => {
       });
       navigation.replace('Main');
     } catch (error) {
-      alert('Error al crear usuario. Intenta de nuevo.');
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
 
   if (showRegister) {
-    return (
-      <KeyboardAvoidingView style={styles.container} behavior="padding">
-        <View style={styles.content}>
-          <Text style={styles.welcomeIcon}>🦅</Text>
-          <Text style={styles.welcomeTitle}>
-            Bienvenido a {''}
-            <Text style={styles.welcomeHighlight}>Sisio</Text>
-          </Text>
-          <Text style={styles.welcomeSubtitle}>
-            El conocimiento ancestral sobre las aves te espera
-          </Text>
-          <View style={styles.formContainer}>
-            <Text style={styles.inputLabel}>¿Cómo te llamas?</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Tu nombre"
-              placeholderTextColor="rgba(255,255,255,0.3)"
-              value={name}
-              onChangeText={setName}
-              editable={!loading}
-            />
-            <TouchableOpacity
-              style={[styles.primaryButton, (!name.trim() || loading) && styles.buttonDisabled]}
-              onPress={handleContinueAsGuest}
-              disabled={!name.trim() || loading}
-            >
-              <Text style={styles.primaryButtonText}>
-                {loading ? 'Entrando...' : 'Explorar como Invitado'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => navigation.navigate('Register')}
-              disabled={loading}
-            >
-              <Text style={styles.secondaryButtonText}>Crear Cuenta</Text>
-            </TouchableOpacity>
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>O</Text>
-              <View style={styles.dividerLine} />
-            </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.loginLink}>Ya tengo cuenta</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    );
+    return <ModeSelectionSlide colors={colors} isDark={isDark} />;
   }
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-        <Text style={styles.skipText}>Saltar</Text>
-      </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Skip Button */}
+      <Animated.View entering={FadeInUp.delay(200).springify()}>
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top: 50,
+            right: 16,
+            zIndex: 10,
+            paddingVertical: 8,
+            paddingHorizontal: 14,
+          }}
+          onPress={handleSkip}
+        >
+          <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '500' }}>
+            Saltar
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Slides */}
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -150,216 +140,434 @@ export const OnboardingScreen = ({ navigation }: any) => {
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
+        style={{ flex: 1 }}
       >
-        {slides.map((slide) => (
-          <View key={slide.id} style={styles.slide}>
-            <Text style={styles.slideIcon}>{slide.icon}</Text>
-            <Text style={styles.slideTitle}>{slide.title}</Text>
-            <Text style={styles.slideSubtitle}>{slide.subtitle}</Text>
-            <Text style={styles.slideDescription}>{slide.description}</Text>
-          </View>
+        {slides.map((slide, index) => (
+          <OnboardingSlide
+            key={slide.id}
+            slide={slide}
+            index={index}
+            colors={colors}
+            isDark={isDark}
+            scrollX={scrollX}
+          />
         ))}
       </ScrollView>
-      <View style={styles.footer}>
-        <View style={styles.pagination}>
-          {slides.map((_, index) => (
-            <View
-              key={index}
-              style={[styles.dot, currentSlide === index && styles.activeDot]}
-            />
-          ))}
+
+      {/* Footer */}
+      <Animated.View entering={FadeInUp.delay(400).springify()}>
+        <View style={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 16 }}>
+          {/* Pagination Dots */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'center',
+              marginBottom: 20,
+              gap: 6,
+            }}
+          >
+            {slides.map((_, idx) => (
+              <Animated.View
+                key={idx}
+                style={[
+                  {
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor:
+                      idx === currentSlide
+                        ? colors.accent
+                        : colors.border,
+                  },
+                  {
+                    width: idx === currentSlide ? 24 : 8,
+                  },
+                ]}
+              />
+            ))}
+          </View>
+
+          {/* Next Button */}
+          <Button
+            title={currentSlide < slides.length - 1 ? 'Siguiente' : 'Comenzar'}
+            onPress={handleNext}
+            fullWidth
+          />
         </View>
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text style={styles.nextButtonText}>
-            {currentSlide < slides.length - 1 ? 'Siguiente' : 'Comenzar'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      </Animated.View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  skipButton: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  skipText: {
-    color: theme.colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  slide: {
-    width,
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  slideIcon: {
-    fontSize: 72,
-    marginBottom: 24,
-  },
-  slideTitle: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: theme.colors.text,
-    textAlign: 'center',
-    fontFamily: theme.fonts.display,
-    marginBottom: 8,
-  },
-  slideSubtitle: {
-    fontSize: 14,
-    color: theme.colors.secondary,
-    textAlign: 'center',
-    marginBottom: 20,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  slideDescription: {
-    fontSize: 15,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-    fontFamily: theme.fonts.body,
-    paddingHorizontal: 16,
-  },
-  footer: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-    paddingTop: 16,
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    marginHorizontal: 4,
-  },
-  activeDot: {
-    width: 24,
-    backgroundColor: theme.colors.secondary,
-    borderRadius: 4,
-  },
-  nextButton: {
-    backgroundColor: theme.colors.secondary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  nextButtonText: {
-    color: theme.colors.background,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  welcomeIcon: {
-    fontSize: 64,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  welcomeTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: theme.colors.text,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  welcomeHighlight: {
-    color: theme.colors.secondary,
-    fontFamily: theme.fonts.display,
-  },
-  welcomeSubtitle: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 20,
-  },
-  formContainer: {
-    gap: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: -8,
-  },
-  input: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: theme.colors.text,
-  },
-  primaryButton: {
-    backgroundColor: theme.colors.secondary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: theme.colors.background,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  secondaryButton: {
-    borderWidth: 1.5,
-    borderColor: theme.colors.secondary,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: theme.colors.secondary,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  dividerText: {
-    color: theme.colors.textSecondary,
-    fontSize: 13,
-  },
-  loginLink: {
-    color: theme.colors.secondary,
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-    textDecorationLine: 'underline',
-  },
-});
+interface OnboardingSlidePropss {
+  slide: (typeof slides)[0];
+  index: number;
+  colors: any;
+  isDark: boolean;
+  scrollX: Animated.Shared<number>;
+}
+
+const OnboardingSlide: React.FC<OnboardingSlidePropss> = ({
+  slide,
+  index,
+  colors,
+  isDark,
+  scrollX,
+}) => {
+  const titleOpacity = useSharedValue(0);
+  const titleTranslate = useSharedValue(50);
+  const subtitleOpacity = useSharedValue(0);
+  const subtitleTranslate = useSharedValue(50);
+  const descriptionOpacity = useSharedValue(0);
+  const descriptionTranslate = useSharedValue(50);
+
+  useEffect(() => {
+    titleOpacity.value = withTiming(1, { duration: 600 });
+    titleTranslate.value = withSpring(0, { damping: 15 });
+
+    subtitleOpacity.value = withTiming(1, { duration: 600, delay: 200 });
+    subtitleTranslate.value = withSpring(0, { damping: 15, delay: 200 });
+
+    descriptionOpacity.value = withTiming(1, { duration: 600, delay: 400 });
+    descriptionTranslate.value = withSpring(0, { damping: 15, delay: 400 });
+  }, [index]);
+
+  const titleStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value,
+    transform: [{ translateY: titleTranslate.value }],
+  }));
+
+  const subtitleStyle = useAnimatedStyle(() => ({
+    opacity: subtitleOpacity.value,
+    transform: [{ translateY: subtitleTranslate.value }],
+  }));
+
+  const descriptionStyle = useAnimatedStyle(() => ({
+    opacity: descriptionOpacity.value,
+    transform: [{ translateY: descriptionTranslate.value }],
+  }));
+
+  return (
+    <View
+      style={{
+        width,
+        height,
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+      }}
+    >
+      <LinearGradient
+        colors={slide.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          opacity: 0.3,
+        }}
+      />
+
+      {/* Icon Animation */}
+      <Animated.View
+        entering={ZoomIn.delay(100).springify()}
+        style={{ marginBottom: 32 }}
+      >
+        <View
+          style={{
+            width: 100,
+            height: 100,
+            borderRadius: 50,
+            backgroundColor: `${slide.gradient[0]}50`,
+            borderWidth: 2,
+            borderColor: slide.gradient[0],
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Feather
+            name={index === 0 ? 'feather' : index === 1 ? 'camera' : 'heart'}
+            size={48}
+            color={colors.foreground}
+          />
+        </View>
+      </Animated.View>
+
+      {/* Title */}
+      <Animated.Text
+        style={[
+          {
+            fontSize: 36,
+            fontWeight: '800',
+            color: colors.foreground,
+            textAlign: 'center',
+            marginBottom: 8,
+          },
+          titleStyle,
+        ]}
+      >
+        {slide.title}
+      </Animated.Text>
+
+      {/* Subtitle */}
+      <Animated.Text
+        style={[
+          {
+            fontSize: 16,
+            fontWeight: '600',
+            color: colors.accent,
+            textAlign: 'center',
+            marginBottom: 20,
+            letterSpacing: 0.5,
+          },
+          subtitleStyle,
+        ]}
+      >
+        {slide.subtitle}
+      </Animated.Text>
+
+      {/* Description */}
+      <Animated.Text
+        style={[
+          {
+            fontSize: 15,
+            color: colors.muted,
+            textAlign: 'center',
+            lineHeight: 24,
+            paddingHorizontal: 12,
+          },
+          descriptionStyle,
+        ]}
+      >
+        {slide.description}
+      </Animated.Text>
+    </View>
+  );
+};
+
+// Mode Selection Slide Component
+interface ModeSelectionSlideProps {
+  colors: any;
+  isDark: boolean;
+}
+
+const ModeSelectionSlide: React.FC<ModeSelectionSlideProps> = ({
+  colors,
+  isDark,
+}) => {
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { guestLogin } = useAuthStore();
+  const navigation = useRef<any>(null);
+
+  const handleContinueAsGuest = async () => {
+    if (!name.trim()) return;
+    setLoading(true);
+    try {
+      const response = await apiService.createGuestUser(name.trim());
+      const data = response.data;
+      guestLogin({
+        name: name.trim(),
+        guest_id: data.guest_id,
+      });
+      // Navigate will happen via useEffect
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+        <ScrollView
+          contentContainerStyle={{
+            flex: 1,
+            justifyContent: 'center',
+            paddingHorizontal: 24,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Welcome Section */}
+          <Animated.View entering={FadeInUp.delay(100).springify()}>
+            <View style={{ alignItems: 'center', marginBottom: 40 }}>
+              <Animated.View
+                entering={ZoomIn.delay(200).springify()}
+                style={{ marginBottom: 16 }}
+              >
+                <View
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    backgroundColor: `${colors.accent}20`,
+                    borderWidth: 2,
+                    borderColor: colors.accent,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Feather name="feather" size={40} color={colors.accent} />
+                </View>
+              </Animated.View>
+
+              <Text
+                style={{
+                  fontSize: 28,
+                  fontWeight: '800',
+                  color: colors.foreground,
+                  textAlign: 'center',
+                }}
+              >
+                Bienvenido a{' '}
+                <Text style={{ color: colors.accent }}>Sisio</Text>
+              </Text>
+
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: colors.muted,
+                  textAlign: 'center',
+                  marginTop: 12,
+                  lineHeight: 20,
+                }}
+              >
+                El conocimiento ancestral sobre las aves te espera
+              </Text>
+            </View>
+          </Animated.View>
+
+          {/* Form Section */}
+          <Animated.View entering={FadeInUp.delay(250).springify()}>
+            <GlassCard
+              intensity={60}
+              borderRadius={20}
+              gradientColors={[
+                `${colors.primaryLight}10`,
+                `${colors.primaryLight}05`,
+              ]}
+            >
+              <View style={{ paddingVertical: 24, paddingHorizontal: 16 }}>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    color: colors.muted,
+                    marginBottom: 8,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  ¿Cómo te llamas?
+                </Text>
+
+                <TextInput
+                  style={{
+                    backgroundColor: `${colors.card}`,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                    fontSize: 15,
+                    color: colors.foreground,
+                    marginBottom: 16,
+                  }}
+                  placeholder="Tu nombre"
+                  placeholderTextColor={colors.muted}
+                  value={name}
+                  onChangeText={setName}
+                  editable={!loading}
+                  autoCapitalize="words"
+                />
+
+                <Button
+                  title={loading ? 'Entrando...' : 'Explorar como Invitado'}
+                  onPress={handleContinueAsGuest}
+                  disabled={!name.trim() || loading}
+                  loading={loading}
+                  fullWidth
+                />
+
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginVertical: 20,
+                    gap: 12,
+                  }}
+                >
+                  <View
+                    style={{
+                      flex: 1,
+                      height: 1,
+                      backgroundColor: colors.border,
+                    }}
+                  />
+                  <Text style={{ color: colors.muted, fontSize: 12 }}>O</Text>
+                  <View
+                    style={{
+                      flex: 1,
+                      height: 1,
+                      backgroundColor: colors.border,
+                    }}
+                  />
+                </View>
+
+                <Button
+                  title="Crear Cuenta"
+                  variant="secondary"
+                  onPress={() => {
+                    /* Navigation to Register */
+                  }}
+                  fullWidth
+                  style={{ marginBottom: 12 }}
+                />
+
+                <TouchableOpacity style={{ paddingVertical: 8 }}>
+                  <Text
+                    style={{
+                      color: colors.accent,
+                      fontSize: 14,
+                      fontWeight: '600',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Ya tengo cuenta
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </GlassCard>
+          </Animated.View>
+
+          {/* Footer Text */}
+          <Animated.View
+            entering={FadeInUp.delay(400).springify()}
+            style={{ marginTop: 32 }}
+          >
+            <Text
+              style={{
+                fontSize: 12,
+                color: colors.muted,
+                textAlign: 'center',
+                lineHeight: 18,
+              }}
+            >
+              Proteges tu privacidad con nosotros.{'\n'}
+              Lee nuestros términos de servicio
+            </Text>
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
