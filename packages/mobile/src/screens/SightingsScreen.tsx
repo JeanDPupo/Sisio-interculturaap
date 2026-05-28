@@ -8,13 +8,21 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
+import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useAuth, useSightings } from '@sisio/shared';
-import { theme } from '../theme';
+import { Button, GlassCard, Header } from '../components';
+import { useThemeColor } from '../hooks';
+
+const filters = ['Todos', 'Foto', 'Audio'];
 
 export const SightingsScreen = ({ navigation }: any) => {
+  const { colors } = useThemeColor();
   const { user } = useAuth();
   const { sightings, loading, getSightings } = useSightings();
   const [groupedSightings, setGroupedSightings] = useState<any>({});
+  const [activeFilter, setActiveFilter] = useState('Todos');
 
   useEffect(() => {
     if (user?.id) getSightings(user.id);
@@ -22,51 +30,84 @@ export const SightingsScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     const grouped: any = {};
-    sightings.forEach((sighting: any) => {
+    sightings
+      .filter((sighting: any) => {
+        if (activeFilter === 'Todos') return true;
+        const source = sighting.audio_url || sighting.audio ? 'Audio' : 'Foto';
+        return source === activeFilter;
+      })
+      .forEach((sighting: any) => {
       const date = new Date(sighting.created_at).toLocaleDateString('es-ES', {
-        year: 'numeric', month: 'long', day: 'numeric',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       });
       if (!grouped[date]) grouped[date] = [];
       grouped[date].push(sighting);
     });
     setGroupedSightings(grouped);
-  }, [sightings]);
+  }, [sightings, activeFilter]);
 
-  const renderSightingCard = (sighting: any) => (
-    <TouchableOpacity
-      key={sighting.id}
-      style={styles.sightingCard}
-      onPress={() => navigation.navigate('BirdDetail', { sightingId: sighting.id })}
-      activeOpacity={0.7}
-    >
-      <View style={styles.cardContent}>
-        <View style={styles.cardLeft}>
-          <View style={styles.cardIcon}>
-            <Text style={{ fontSize: 18 }}>🦅</Text>
-          </View>
-          <View>
-            <Text style={styles.birdName}>{sighting.bird_name || 'Ave desconocida'}</Text>
-            <Text style={styles.timestamp}>
-              {new Date(sighting.created_at).toLocaleTimeString('es-ES', {
-                hour: '2-digit', minute: '2-digit',
-              })}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.confidenceBadge}>
-          <Text style={styles.confidenceText}>
-            {Math.round((sighting.confidence || 0) * 100)}%
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderSightingCard = (sighting: any, index: number) => {
+    const confidence = Math.round((sighting.confidence || 0) * 100);
+    const source = sighting.audio_url || sighting.audio ? 'Audio' : 'Foto';
+
+    return (
+      <Animated.View key={sighting.id} entering={FadeInUp.delay(index * 50).springify()}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('BirdDetail', { sightingId: sighting.id })}
+          activeOpacity={0.86}
+          style={styles.cardTouch}
+        >
+          <GlassCard borderRadius={16} intensity={55}>
+            <View style={styles.sightingCard}>
+              <View style={[styles.cardIcon, { backgroundColor: `${colors.accent}18` }]}>
+                <Feather
+                  name={source === 'Audio' ? 'volume-2' : 'camera'}
+                  size={20}
+                  color={colors.accent}
+                />
+              </View>
+              <View style={styles.cardContent}>
+                <Text style={[styles.birdName, { color: colors.foreground }]} numberOfLines={1}>
+                  {sighting.bird_name || 'Ave desconocida'}
+                </Text>
+                <View style={styles.metaRow}>
+                  <Text style={[styles.timestamp, { color: colors.muted }]}>
+                    {new Date(sighting.created_at).toLocaleTimeString('es-ES', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                  <View style={[styles.sourceBadge, { borderColor: colors.border }]}>
+                    <Text style={[styles.sourceText, { color: colors.muted }]}>{source}</Text>
+                  </View>
+                </View>
+              </View>
+              <View style={[styles.confidenceBadge, { backgroundColor: `${colors.primaryLight}18` }]}>
+                <Text style={[styles.confidenceText, { color: colors.primaryLight }]}>
+                  {confidence}%
+                </Text>
+              </View>
+            </View>
+          </GlassCard>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <LinearGradient
+          colors={[`${colors.secondary}14`, `${colors.primaryLight}08`, 'transparent']}
+          style={StyleSheet.absoluteFill}
+        />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.secondary} />
+          <ActivityIndicator size="large" color={colors.accent} />
+          <Text style={[styles.loadingText, { color: colors.muted }]}>
+            Cargando avistamientos...
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -74,32 +115,77 @@ export const SightingsScreen = ({ navigation }: any) => {
 
   if (sightings.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <LinearGradient
+          colors={[`${colors.accent}12`, `${colors.primaryLight}08`, 'transparent']}
+          style={StyleSheet.absoluteFill}
+        />
+        <Header title="Avistamientos" subtitle="Registro de campo" />
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🦅</Text>
-          <Text style={styles.emptyTitle}>Sin avistamientos aún</Text>
-          <Text style={styles.emptyText}>
-            Captura fotos o audios de aves para crear tu primer avistamiento
-          </Text>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => navigation.navigate('Home')}
+          <Animated.View entering={ZoomIn.delay(80).springify()}>
+            <View style={[styles.emptyIcon, { borderColor: colors.accent }]}>
+              <Feather name="feather" size={46} color={colors.accent} />
+            </View>
+          </Animated.View>
+          <Animated.Text
+            entering={FadeInDown.delay(160).springify()}
+            style={[styles.emptyTitle, { color: colors.foreground }]}
           >
-            <Text style={styles.primaryButtonText}>Empezar Ahora</Text>
-          </TouchableOpacity>
+            Sin avistamientos aun
+          </Animated.Text>
+          <Animated.Text
+            entering={FadeInDown.delay(220).springify()}
+            style={[styles.emptyText, { color: colors.muted }]}
+          >
+            Captura fotos o audios de aves para crear tu primer registro.
+          </Animated.Text>
+          <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.emptyAction}>
+            <Button
+              title="Empezar Ahora"
+              onPress={() => navigation.navigate('Home')}
+              fullWidth
+            />
+          </Animated.View>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Avistamientos</Text>
-        <View style={styles.countBadge}>
-          <Text style={styles.countText}>{sightings.length}</Text>
-        </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient
+        colors={[`${colors.secondary}12`, `${colors.primaryLight}08`, 'transparent']}
+        style={StyleSheet.absoluteFill}
+      />
+      <Header
+        title="Avistamientos"
+        subtitle={`${sightings.length} registro${sightings.length !== 1 ? 's' : ''}`}
+        rightIcon={<Feather name="search" size={20} color={colors.accent} />}
+      />
+
+      <View style={styles.filterRow}>
+        {filters.map((filter) => {
+          const selected = activeFilter === filter;
+          return (
+            <TouchableOpacity
+              key={filter}
+              onPress={() => setActiveFilter(filter)}
+              style={[
+                styles.filterChip,
+                {
+                  borderColor: selected ? colors.accent : colors.border,
+                  backgroundColor: selected ? `${colors.accent}18` : colors.card,
+                },
+              ]}
+            >
+              <Text style={[styles.filterText, { color: selected ? colors.accent : colors.muted }]}>
+                {filter}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
+
       <FlatList
         data={Object.entries(groupedSightings).sort((a: any, b: any) => {
           return new Date(b[0]).getTime() - new Date(a[0]).getTime();
@@ -107,8 +193,8 @@ export const SightingsScreen = ({ navigation }: any) => {
         keyExtractor={([date]: any) => date}
         renderItem={({ item: [date, dateSightings] }: any) => (
           <View style={styles.dateGroup}>
-            <Text style={styles.dateHeader}>{date}</Text>
-            {dateSightings.map((sighting: any) => renderSightingCard(sighting))}
+            <Text style={[styles.dateHeader, { color: colors.muted }]}>{date}</Text>
+            {dateSightings.map((sighting: any, index: number) => renderSightingCard(sighting, index))}
           </View>
         )}
         contentContainerStyle={styles.listContent}
@@ -120,129 +206,137 @@ export const SightingsScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
-  header: {
+  filterRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 8,
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingTop: 14,
+    paddingBottom: 4,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: theme.colors.text,
-    fontFamily: theme.fonts.display,
+  filterChip: {
+    minHeight: 36,
+    paddingHorizontal: 14,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  countBadge: {
-    backgroundColor: theme.colors.secondary,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  countText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: theme.colors.background,
+  filterText: {
+    fontSize: 12,
+    fontWeight: '800',
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingTop: 12,
+    paddingBottom: 28,
   },
   dateGroup: {
-    marginBottom: 20,
+    marginBottom: 22,
   },
   dateHeader: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: theme.colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '800',
     marginBottom: 10,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.7,
+  },
+  cardTouch: {
+    marginBottom: 10,
   },
   sightingCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 14,
+    minHeight: 74,
     padding: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  cardContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
   cardIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(212, 160, 23, 0.15)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  cardContent: {
+    flex: 1,
+    minWidth: 0,
+  },
   birdName: {
     fontSize: 15,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 2,
+    fontWeight: '800',
+    marginBottom: 7,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   timestamp: {
     fontSize: 12,
-    color: theme.colors.textSecondary,
+    fontWeight: '600',
+  },
+  sourceBadge: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  sourceText: {
+    fontSize: 10,
+    fontWeight: '800',
   },
   confidenceBadge: {
-    backgroundColor: 'rgba(212, 160, 23, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 16,
+    minWidth: 52,
+    minHeight: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
   },
   confidenceText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: theme.colors.secondary,
+    fontWeight: '900',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 14,
+  },
+  loadingText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 28,
   },
-  emptyIcon: { fontSize: 64, marginBottom: 16 },
+  emptyIcon: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 22,
+    backgroundColor: 'rgba(212, 160, 23, 0.08)',
+  },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.text,
+    fontSize: 22,
+    fontWeight: '900',
     marginBottom: 8,
     textAlign: 'center',
   },
   emptyText: {
     fontSize: 14,
-    color: theme.colors.textSecondary,
+    lineHeight: 20,
     textAlign: 'center',
     marginBottom: 24,
-    lineHeight: 20,
   },
-  primaryButton: {
-    backgroundColor: theme.colors.secondary,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  primaryButtonText: {
-    color: theme.colors.background,
-    fontSize: 16,
-    fontWeight: '700',
+  emptyAction: {
+    width: '100%',
   },
 });
