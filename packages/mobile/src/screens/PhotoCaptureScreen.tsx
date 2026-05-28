@@ -1,19 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
   SafeAreaView,
+  StyleSheet,
 } from 'react-native';
+import Animated, {
+  FadeInUp,
+  FadeInDown,
+  ZoomIn,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useBirdStore, useOfflineStore, apiService } from '@sisio/shared';
-import { theme } from '../theme';
+import { Button, GlassCard, Header } from '../components';
+import { useThemeColor } from '../hooks';
 
 export const PhotoCaptureScreen = ({ navigation }: any) => {
+  const insets = useSafeAreaInsets();
+  const { colors, isDark } = useThemeColor();
   const [photo, setPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
@@ -124,190 +139,435 @@ export const PhotoCaptureScreen = ({ navigation }: any) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>‹</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Fotografía</Text>
-        <View style={styles.backBtn} />
-      </View>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: colors.background, paddingTop: insets.top },
+      ]}
+    >
+      <Header
+        title="Capturar Foto"
+        leftIcon={<Feather name="chevron-left" size={24} color={colors.foreground} />}
+        onLeftPress={() => navigation.goBack()}
+      />
+
       {photo ? (
-        <View style={styles.previewContainer}>
-          <Image source={{ uri: photo }} style={styles.preview} />
-          <View style={styles.locationBadge}>
-            <Text style={styles.locationText}>
-              📍 {location ? 'Ubicación capturada' : 'Sin ubicación'}
-            </Text>
-          </View>
-          <View style={styles.actions}>
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => setPhoto(null)}>
-              <Text style={styles.secondaryButtonText}>Cambiar Foto</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.primaryButton, loading && styles.buttonDisabled]}
-              onPress={handleIdentify}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={theme.colors.background} />
-              ) : (
-                <Text style={styles.primaryButtonText}>Identificar Ave</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
+        <PreviewSection
+          photo={photo}
+          location={location}
+          loading={loading}
+          colors={colors}
+          isDark={isDark}
+          onChangePhoto={() => setPhoto(null)}
+          onIdentify={handleIdentify}
+        />
       ) : (
-        <View style={styles.emptyContainer}>
-          <View style={styles.viewfinder}>
-            <Text style={styles.viewfinderIcon}>📸</Text>
-          </View>
-          <Text style={styles.emptyText}>
-            Captura o selecciona una foto del ave para identificarla
-          </Text>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.largeButton} onPress={handleTakePhoto}>
-              <Text style={styles.largeButtonIcon}>📷</Text>
-              <Text style={styles.largeButtonText}>Tomar Foto</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.largeButton, styles.galleryButton]}
-              onPress={handleSelectFromGallery}
-            >
-              <Text style={styles.largeButtonIcon}>🖼️</Text>
-              <Text style={styles.largeButtonText}>Galería</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <CaptureSection
+          colors={colors}
+          isDark={isDark}
+          onTakePhoto={handleTakePhoto}
+          onSelectFromGallery={handleSelectFromGallery}
+        />
       )}
     </SafeAreaView>
+  );
+};
+
+interface PreviewSectionProps {
+  photo: string;
+  location: Location.LocationObject | null;
+  loading: boolean;
+  colors: any;
+  isDark: boolean;
+  onChangePhoto: () => void;
+  onIdentify: () => void;
+}
+
+const PreviewSection: React.FC<PreviewSectionProps> = ({
+  photo,
+  location,
+  loading,
+  colors,
+  isDark,
+  onChangePhoto,
+  onIdentify,
+}) => {
+  return (
+    <Animated.View
+      entering={FadeInUp.delay(100).springify()}
+      style={styles.previewContainer}
+    >
+      {/* Image Preview */}
+      <View style={styles.imageWrapper}>
+        <Image source={{ uri: photo }} style={styles.preview} />
+
+        {loading && (
+          <BlurView intensity={80} style={styles.loadingOverlay}>
+            <View style={styles.loadingContent}>
+              <View style={styles.spinner}>
+                <Feather name="loader" size={32} color={colors.accent} />
+              </View>
+              <Text style={[styles.loadingText, { color: colors.foreground }]}>
+                Analizando foto...
+              </Text>
+              <Text style={[styles.loadingSubtext, { color: colors.muted }]}>
+                Identificando ave
+              </Text>
+            </View>
+          </BlurView>
+        )}
+      </View>
+
+      {/* Location Badge */}
+      <Animated.View entering={FadeInUp.delay(200).springify()}>
+        <GlassCard
+          intensity={50}
+          borderRadius={12}
+          gradientColors={[
+            `${colors.secondary}10`,
+            `${colors.secondary}05`,
+          ]}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, gap: 8 }}>
+            <Feather name="map-pin" size={16} color={colors.secondary} />
+            <Text style={{ color: colors.muted, fontSize: 13 }}>
+              {location ? 'Ubicación capturada' : 'Sin ubicación'}
+            </Text>
+          </View>
+        </GlassCard>
+      </Animated.View>
+
+      {/* Action Buttons */}
+      <Animated.View
+        entering={FadeInUp.delay(300).springify()}
+        style={styles.actionButtons}
+      >
+        <Button
+          title="Cambiar Foto"
+          variant="outline"
+          onPress={onChangePhoto}
+          disabled={loading}
+          fullWidth
+        />
+        <Button
+          title={loading ? 'Analizando...' : 'Identificar Ave'}
+          loading={loading}
+          onPress={onIdentify}
+          disabled={loading}
+          fullWidth
+        />
+      </Animated.View>
+    </Animated.View>
+  );
+};
+
+interface CaptureSectionProps {
+  colors: any;
+  isDark: boolean;
+  onTakePhoto: () => void;
+  onSelectFromGallery: () => void;
+}
+
+const CaptureSection: React.FC<CaptureSectionProps> = ({
+  colors,
+  isDark,
+  onTakePhoto,
+  onSelectFromGallery,
+}) => {
+  return (
+    <Animated.View
+      entering={FadeInUp.delay(100).springify()}
+      style={[styles.captureContainer, { justifyContent: 'center' }]}
+    >
+      {/* Animated Viewfinder */}
+      <ViewfinderAnimated colors={colors} />
+
+      {/* Description */}
+      <Animated.View entering={FadeInUp.delay(300).springify()}>
+        <Text
+          style={[
+            styles.emptyText,
+            { color: colors.muted },
+          ]}
+        >
+          Captura o selecciona una foto{'\n'}del ave para identificarla
+        </Text>
+      </Animated.View>
+
+      {/* CTA Buttons */}
+      <Animated.View
+        entering={FadeInUp.delay(400).springify()}
+        style={styles.buttonContainer}
+      >
+        <TouchableOpacity
+          onPress={onTakePhoto}
+          activeOpacity={0.9}
+        >
+          <LinearGradient
+            colors={[
+              'rgba(45, 80, 22, 0.4)',
+              'rgba(74, 124, 47, 0.2)',
+            ]}
+            style={styles.ctaButton}
+          >
+            <View
+              style={{
+                alignItems: 'center',
+                gap: 12,
+              }}
+            >
+              <View
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  backgroundColor: 'rgba(139, 195, 74, 0.2)',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Feather name="camera" size={28} color={colors.primaryLight} />
+              </View>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '700',
+                  color: colors.foreground,
+                }}
+              >
+                Tomar Foto
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: colors.muted,
+                  textAlign: 'center',
+                }}
+              >
+                Usa tu cámara
+              </Text>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={onSelectFromGallery}
+          activeOpacity={0.9}
+        >
+          <LinearGradient
+            colors={[
+              'rgba(212, 160, 23, 0.4)',
+              'rgba(245, 200, 66, 0.2)',
+            ]}
+            style={styles.ctaButton}
+          >
+            <View
+              style={{
+                alignItems: 'center',
+                gap: 12,
+              }}
+            >
+              <View
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  backgroundColor: 'rgba(245, 200, 66, 0.2)',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Feather name="image" size={28} color={colors.accent} />
+              </View>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '700',
+                  color: colors.foreground,
+                }}
+              >
+                Galería
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: colors.muted,
+                  textAlign: 'center',
+                }}
+              >
+                Selecciona una foto
+              </Text>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
+    </Animated.View>
+  );
+};
+
+// Viewfinder with animation
+const ViewfinderAnimated: React.FC<{ colors: any }> = ({ colors }) => {
+  const pulse = useSharedValue(1);
+  const opacity = useSharedValue(0.3);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withTiming(1.1, { duration: 1500 }),
+      -1,
+      true
+    );
+    opacity.value = withRepeat(
+      withTiming(0.8, { duration: 1500 }),
+      -1,
+      true
+    );
+  }, []);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View entering={ZoomIn.delay(150).springify()} style={styles.viewfinderWrapper}>
+      <Animated.View style={[styles.viewfinderPulse, pulseStyle]}>
+        <View style={[styles.viewfinder, { borderColor: colors.primaryLight }]}>
+          {/* Corner indicators */}
+          {[0, 1, 2, 3].map((i) => (
+            <View
+              key={i}
+              style={[
+                styles.corner,
+                { borderColor: colors.primaryLight },
+                i === 0 && styles.cornerTopLeft,
+                i === 1 && styles.cornerTopRight,
+                i === 2 && styles.cornerBottomLeft,
+                i === 3 && styles.cornerBottomRight,
+              ]}
+            />
+          ))}
+        </View>
+      </Animated.View>
+      <Feather name="camera" size={48} color={colors.primaryLight} style={{ marginTop: 16 }} />
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
-  header: {
-    flexDirection: 'row',
+  captureContainer: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  backBtn: { width: 40 },
-  backArrow: {
-    fontSize: 32,
-    color: theme.colors.text,
-    fontWeight: '300',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.text,
-    textAlign: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 24,
   },
   previewContainer: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     justifyContent: 'space-between',
+  },
+  imageWrapper: {
+    flex: 1,
+    position: 'relative',
+    marginBottom: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   preview: {
     width: '100%',
-    height: 300,
+    height: '100%',
     borderRadius: 16,
-    marginBottom: 12,
   },
-  locationBadge: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  locationText: {
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  actions: {
-    gap: 10,
-  },
-  primaryButton: {
-    backgroundColor: theme.colors.secondary,
-    paddingVertical: 16,
-    borderRadius: 12,
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.background,
-  },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    paddingVertical: 14,
-    borderRadius: 12,
+  loadingContent: {
     alignItems: 'center',
+    gap: 12,
   },
-  secondaryButtonText: {
-    color: theme.colors.text,
+  spinner: {
+    opacity: 0.8,
+  },
+  loadingText: {
     fontSize: 16,
     fontWeight: '600',
   },
-  buttonDisabled: { opacity: 0.5 },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  loadingSubtext: {
+    fontSize: 12,
+  },
+  actionButtons: {
+    width: '100%',
+    gap: 12,
+    marginBottom: 16,
+  },
+  viewfinderWrapper: {
     alignItems: 'center',
-    paddingHorizontal: 24,
+    marginBottom: 32,
+  },
+  viewfinderPulse: {
+    marginBottom: 16,
   },
   viewfinder: {
-    width: 160,
-    height: 160,
-    borderRadius: 24,
+    width: 180,
+    height: 180,
     borderWidth: 2,
-    borderColor: theme.colors.primary,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-    opacity: 0.6,
+    borderRadius: 16,
+    position: 'relative',
   },
-  viewfinderIcon: { fontSize: 48 },
+  corner: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+  },
+  cornerTopLeft: {
+    top: -2,
+    left: -2,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+  },
+  cornerTopRight: {
+    top: -2,
+    right: -2,
+    borderLeftWidth: 0,
+    borderBottomWidth: 0,
+  },
+  cornerBottomLeft: {
+    bottom: -2,
+    left: -2,
+    borderRightWidth: 0,
+    borderTopWidth: 0,
+  },
+  cornerBottomRight: {
+    bottom: -2,
+    right: -2,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+  },
   emptyText: {
     fontSize: 15,
-    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
     lineHeight: 22,
   },
   buttonContainer: {
     width: '100%',
     gap: 12,
   },
-  largeButton: {
-    backgroundColor: 'rgba(45, 80, 22, 0.3)',
+  ctaButton: {
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    paddingVertical: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  galleryButton: {
-    backgroundColor: 'rgba(212, 160, 23, 0.1)',
-    borderColor: 'rgba(212, 160, 23, 0.3)',
-  },
-  largeButtonIcon: { fontSize: 22 },
-  largeButtonText: {
-    color: theme.colors.text,
-    fontSize: 16,
-    fontWeight: '600',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
 });
