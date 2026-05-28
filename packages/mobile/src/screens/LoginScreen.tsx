@@ -7,12 +7,16 @@ import {
   TouchableOpacity,
   SafeAreaView,
   KeyboardAvoidingView,
-  ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
+import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useAuth } from '@sisio/shared';
-import { theme } from '../theme';
+import { Button, GlassCard } from '../components';
+import { useThemeColor } from '../hooks';
 
 export const LoginScreen = ({ navigation }: any) => {
+  const { colors } = useThemeColor();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,182 +28,250 @@ export const LoginScreen = ({ navigation }: any) => {
       return;
     }
     setLoading(true);
+    setError(null);
     try {
       await login({ email: email.trim(), password });
       navigation.replace('Main');
-    } catch (err) {
+    } catch {
+      // useAuth stores the displayable error message.
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      behavior="padding"
+    >
+      <LinearGradient
+        colors={[`${colors.secondary}14`, `${colors.primaryLight}08`, 'transparent']}
+        style={StyleSheet.absoluteFill}
+      />
       <SafeAreaView style={styles.content}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backArrow}>‹</Text>
+          <Feather name="chevron-left" size={26} color={colors.foreground} />
         </TouchableOpacity>
+
         <View style={styles.formContainer}>
-          <Text style={styles.icon}>🦅</Text>
-          <Text style={styles.title}>Iniciar Sesión</Text>
-          <Text style={styles.subtitle}>Accede a tu cuenta en Sisio</Text>
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="tu@email.com"
-                placeholderTextColor="rgba(255,255,255,0.3)"
-                value={email}
-                onChangeText={setEmail}
-                editable={!loading}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+          <Animated.View entering={ZoomIn.delay(80).springify()} style={styles.logoWrap}>
+            <View style={[styles.logoCircle, { borderColor: colors.accent }]}>
+              <Feather name="feather" size={42} color={colors.accent} />
             </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Contraseña</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Tu contraseña"
-                placeholderTextColor="rgba(255,255,255,0.3)"
-                value={password}
-                onChangeText={setPassword}
-                editable={!loading}
-                secureTextEntry
-              />
-            </View>
-            {error && (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
-            <TouchableOpacity
-              style={[styles.primaryButton, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
+          </Animated.View>
+
+          <Animated.Text
+            entering={FadeInDown.delay(120).springify()}
+            style={[styles.title, { color: colors.foreground }]}
+          >
+            Iniciar Sesion
+          </Animated.Text>
+          <Animated.Text
+            entering={FadeInDown.delay(180).springify()}
+            style={[styles.subtitle, { color: colors.muted }]}
+          >
+            Vuelve a tu cuaderno de avistamientos
+          </Animated.Text>
+
+          <Animated.View entering={FadeInUp.delay(240).springify()}>
+            <GlassCard
+              intensity={65}
+              borderRadius={20}
+              gradientColors={[`${colors.primaryLight}10`, `${colors.secondary}08`]}
             >
-              {loading ? (
-                <ActivityIndicator color={theme.colors.background} />
-              ) : (
-                <Text style={styles.primaryButtonText}>Iniciar Sesión</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>¿No tienes cuenta? </Text>
+              <View style={styles.form}>
+                <AuthField
+                  label="Email"
+                  icon="mail"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="tu@email.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={!loading}
+                  colors={colors}
+                />
+                <AuthField
+                  label="Contrasena"
+                  icon="lock"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Tu contrasena"
+                  secureTextEntry
+                  editable={!loading}
+                  colors={colors}
+                />
+
+                {error && (
+                  <View
+                    style={[
+                      styles.errorBox,
+                      {
+                        borderColor: `${colors.danger}55`,
+                        backgroundColor: `${colors.danger}12`,
+                      },
+                    ]}
+                  >
+                    <Feather name="alert-circle" size={16} color={colors.danger} />
+                    <Text style={[styles.errorText, { color: colors.danger }]}>
+                      {error}
+                    </Text>
+                  </View>
+                )}
+
+                <Button
+                  title={loading ? 'Entrando...' : 'Entrar'}
+                  onPress={handleLogin}
+                  loading={loading}
+                  disabled={loading}
+                  fullWidth
+                  size="lg"
+                />
+              </View>
+            </GlassCard>
+          </Animated.View>
+
+          <Animated.View entering={FadeInUp.delay(340).springify()} style={styles.footer}>
+            <Text style={[styles.footerText, { color: colors.muted }]}>
+              No tienes cuenta?
+            </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.registerLink}>Regístrate aquí</Text>
+              <Text style={[styles.footerLink, { color: colors.accent }]}>
+                Crear cuenta
+              </Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </View>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
 };
 
+const AuthField = ({
+  label,
+  icon,
+  colors,
+  ...props
+}: any) => (
+  <View style={styles.inputGroup}>
+    <Text style={[styles.label, { color: colors.foreground }]}>{label}</Text>
+    <View
+      style={[
+        styles.inputShell,
+        {
+          borderColor: colors.border,
+          backgroundColor: colors.card,
+        },
+      ]}
+    >
+      <Feather name={icon} size={18} color={colors.muted} />
+      <TextInput
+        style={[styles.input, { color: colors.foreground }]}
+        placeholderTextColor={colors.muted}
+        {...props}
+      />
+    </View>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   content: {
     flex: 1,
   },
   backButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    width: 50,
-  },
-  backArrow: {
-    fontSize: 32,
-    color: theme.colors.text,
-    fontWeight: '300',
+    width: 48,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+    marginTop: 4,
   },
   formContainer: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 36,
   },
-  icon: {
-    fontSize: 48,
-    textAlign: 'center',
-    marginBottom: 16,
+  logoWrap: {
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  logoCircle: {
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(212, 160, 23, 0.08)',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 30,
+    fontWeight: '900',
     textAlign: 'center',
     marginBottom: 8,
-    color: theme.colors.text,
-    fontFamily: theme.fonts.display,
   },
   subtitle: {
     fontSize: 14,
-    color: theme.colors.textSecondary,
+    lineHeight: 20,
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 28,
   },
   form: {
-    marginBottom: 24,
+    padding: 18,
+    gap: 14,
   },
   inputGroup: {
-    marginBottom: 16,
+    gap: 8,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: theme.colors.text,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  inputShell: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: theme.colors.text,
+    flex: 1,
+    fontSize: 15,
+    paddingVertical: 12,
   },
   errorBox: {
-    backgroundColor: 'rgba(244, 67, 54, 0.1)',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    minHeight: 44,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(244, 67, 54, 0.3)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   errorText: {
-    color: theme.colors.error,
-    fontSize: 14,
-  },
-  primaryButton: {
-    backgroundColor: theme.colors.secondary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.background,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 22,
   },
   footerText: {
     fontSize: 14,
-    color: theme.colors.textSecondary,
   },
-  registerLink: {
+  footerLink: {
     fontSize: 14,
-    color: theme.colors.secondary,
-    fontWeight: '600',
+    fontWeight: '800',
   },
 });
