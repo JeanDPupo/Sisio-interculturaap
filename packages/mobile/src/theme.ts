@@ -3,8 +3,11 @@ import { colors as sharedColors } from '@sisio/shared';
 const lightTheme = {
   colors: {
     foreground: sharedColors.negroSelva,
+    text: sharedColors.negroSelva,
     background: sharedColors.blancoNiebla,
+    surface: 'rgba(255, 255, 255, 0.72)',
     muted: '#7A8C7A',
+    textSecondary: '#7A8C7A',
     card: 'rgba(45, 80, 22, 0.05)',
     cardBorder: 'rgba(45, 80, 22, 0.1)',
     border: 'rgba(45, 80, 22, 0.15)',
@@ -28,6 +31,8 @@ const lightTheme = {
     success: sharedColors.riesgoBajo,
     warning: sharedColors.riesgoMedio,
     danger: sharedColors.riesgoAlto,
+    error: sharedColors.riesgoAlto,
+    blancoNiebla: sharedColors.blancoNiebla,
 
     // Backdrop
     backdrop: 'rgba(13, 27, 15, 0.4)',
@@ -37,8 +42,11 @@ const lightTheme = {
 const darkTheme = {
   colors: {
     foreground: sharedColors.blancoNiebla,
+    text: sharedColors.blancoNiebla,
     background: sharedColors.negroSelva,
+    surface: 'rgba(255, 255, 255, 0.06)',
     muted: '#8B9D8B',
+    textSecondary: '#8B9D8B',
     card: 'rgba(255, 255, 255, 0.05)',
     cardBorder: 'rgba(255, 255, 255, 0.08)',
     border: 'rgba(255, 255, 255, 0.1)',
@@ -62,6 +70,8 @@ const darkTheme = {
     success: sharedColors.riesgoBajo,
     warning: sharedColors.riesgoMedio,
     danger: sharedColors.riesgoAlto,
+    error: sharedColors.riesgoAlto,
+    blancoNiebla: sharedColors.blancoNiebla,
 
     // Backdrop
     backdrop: 'rgba(255, 255, 255, 0.1)',

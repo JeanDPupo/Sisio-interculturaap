@@ -12,19 +12,16 @@ import {
   SafeAreaView,
 } from 'react-native';
 import Animated, {
-  FadeIn,
   FadeInUp,
   ZoomIn,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withTiming,
-  withRepeat,
   withSpring,
-  interpolate,
-  Extrapolate,
+  SharedValue,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import { useAuthStore, apiService } from '@sisio/shared';
 import { Button, GlassCard } from '../components';
@@ -62,11 +59,8 @@ const slides = [
 export const OnboardingScreen = ({ navigation }: any) => {
   const { colors, isDark } = useThemeColor();
   const scrollRef = useRef<ScrollView>(null);
-  const { guestLogin } = useAuthStore();
 
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
 
   const scrollX = useSharedValue(0);
@@ -89,26 +83,14 @@ export const OnboardingScreen = ({ navigation }: any) => {
     setShowRegister(true);
   };
 
-  const handleContinueAsGuest = async () => {
-    if (!name.trim()) return;
-    setLoading(true);
-    try {
-      const response = await apiService.createGuestUser(name.trim());
-      const data = response.data;
-      guestLogin({
-        name: name.trim(),
-        guest_id: data.guest_id,
-      });
-      navigation.replace('Main');
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (showRegister) {
-    return <ModeSelectionSlide colors={colors} isDark={isDark} />;
+    return (
+      <ModeSelectionSlide
+        colors={colors}
+        isDark={isDark}
+        navigation={navigation}
+      />
+    );
   }
 
   return (
@@ -203,7 +185,7 @@ interface OnboardingSlidePropss {
   index: number;
   colors: any;
   isDark: boolean;
-  scrollX: Animated.Shared<number>;
+  scrollX: SharedValue<number>;
 }
 
 const OnboardingSlide: React.FC<OnboardingSlidePropss> = ({
@@ -224,11 +206,11 @@ const OnboardingSlide: React.FC<OnboardingSlidePropss> = ({
     titleOpacity.value = withTiming(1, { duration: 600 });
     titleTranslate.value = withSpring(0, { damping: 15 });
 
-    subtitleOpacity.value = withTiming(1, { duration: 600, delay: 200 });
-    subtitleTranslate.value = withSpring(0, { damping: 15, delay: 200 });
+    subtitleOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
+    subtitleTranslate.value = withDelay(200, withSpring(0, { damping: 15 }));
 
-    descriptionOpacity.value = withTiming(1, { duration: 600, delay: 400 });
-    descriptionTranslate.value = withSpring(0, { damping: 15, delay: 400 });
+    descriptionOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
+    descriptionTranslate.value = withDelay(400, withSpring(0, { damping: 15 }));
   }, [index]);
 
   const titleStyle = useAnimatedStyle(() => ({
@@ -352,16 +334,17 @@ const OnboardingSlide: React.FC<OnboardingSlidePropss> = ({
 interface ModeSelectionSlideProps {
   colors: any;
   isDark: boolean;
+  navigation: any;
 }
 
 const ModeSelectionSlide: React.FC<ModeSelectionSlideProps> = ({
   colors,
   isDark,
+  navigation,
 }) => {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const { guestLogin } = useAuthStore();
-  const navigation = useRef<any>(null);
 
   const handleContinueAsGuest = async () => {
     if (!name.trim()) return;
@@ -373,7 +356,7 @@ const ModeSelectionSlide: React.FC<ModeSelectionSlideProps> = ({
         name: name.trim(),
         guest_id: data.guest_id,
       });
-      // Navigate will happen via useEffect
+      navigation.replace('Main');
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -526,14 +509,15 @@ const ModeSelectionSlide: React.FC<ModeSelectionSlideProps> = ({
                 <Button
                   title="Crear Cuenta"
                   variant="secondary"
-                  onPress={() => {
-                    /* Navigation to Register */
-                  }}
+                  onPress={() => navigation.navigate('Register')}
                   fullWidth
                   style={{ marginBottom: 12 }}
                 />
 
-                <TouchableOpacity style={{ paddingVertical: 8 }}>
+                <TouchableOpacity
+                  style={{ paddingVertical: 8 }}
+                  onPress={() => navigation.navigate('Login')}
+                >
                   <Text
                     style={{
                       color: colors.accent,

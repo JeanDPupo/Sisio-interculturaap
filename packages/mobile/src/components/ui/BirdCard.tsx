@@ -13,9 +13,9 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { useThemeColor } from '../hooks/useThemeColor';
+import { useThemeColor } from '../../hooks/useThemeColor';
 import { GlassCard } from './GlassCard';
-import type { Bird } from '@sisio/shared/types';
+import type { Bird } from '@sisio/shared';
 
 interface BirdCardProps {
   bird: Bird;
@@ -32,7 +32,7 @@ export const BirdCard: React.FC<BirdCardProps> = ({
   variant = 'vertical',
   style,
 }) => {
-  const { colors, isDark } = useThemeColor();
+  const { colors } = useThemeColor();
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0.8);
 

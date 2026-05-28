@@ -1,13 +1,7 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TextStyle } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  interpolate,
-  Extrapolate,
-} from 'react-native-reanimated';
-import { useThemeColor } from '../hooks/useThemeColor';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
+import { useThemeColor } from '../../hooks/useThemeColor';
 
 interface StatItemProps {
   value: number;
@@ -25,26 +19,27 @@ export const StatItem: React.FC<StatItemProps> = ({
   icon,
 }) => {
   const { colors } = useThemeColor();
-  const animatedValue = useSharedValue(0);
+  const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
-    animatedValue.value = withTiming(value, { duration: 1200 });
+    let frame: ReturnType<typeof setTimeout>;
+    const steps = 24;
+    let currentStep = 0;
+
+    const tick = () => {
+      currentStep += 1;
+      setDisplayValue(Math.round((value * currentStep) / steps));
+      if (currentStep < steps) {
+        frame = setTimeout(tick, 40);
+      }
+    };
+
+    tick();
+    return () => clearTimeout(frame);
   }, [value]);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    const displayValue = interpolate(
-      animatedValue.value,
-      [0, value],
-      [0, value],
-      Extrapolate.CLAMP
-    );
-    return {
-      opacity: withTiming(1, { duration: 300 }),
-    };
-  });
-
   return (
-    <Animated.View style={[styles.container, animatedStyle]}>
+    <Animated.View entering={FadeInUp.springify()} style={styles.container}>
       {icon && <View style={styles.iconContainer}>{icon}</View>}
       <Text
         style={[
@@ -54,7 +49,7 @@ export const StatItem: React.FC<StatItemProps> = ({
           },
         ]}
       >
-        {Math.floor(animatedValue.value)}{unit}
+        {displayValue}{unit}
       </Text>
       <Text
         style={[

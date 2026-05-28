@@ -97,10 +97,10 @@ export const HomeScreen = ({ navigation }: any) => {
   const { user, isGuest } = useAuthStore();
   const { isOnline } = useOfflineStore();
   const queueStats = useOfflineStore((state) => state.getQueueStats());
-  const stats = useAuthStore((state) => state.stats || {
+  const stats = {
     birdsIdentifiedToday: 0,
     totalSightingsWeek: 0
-  });
+  };
 
   const [displayBirds, setDisplayBirds] = useState<Bird[]>(sampleBirds);
 

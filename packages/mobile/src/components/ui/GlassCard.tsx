@@ -2,7 +2,7 @@ import React from 'react';
 import { View, ViewStyle, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useThemeColor } from '../hooks/useThemeColor';
+import { useThemeColor } from '../../hooks/useThemeColor';
 
 interface GlassCardProps {
   children: React.ReactNode;

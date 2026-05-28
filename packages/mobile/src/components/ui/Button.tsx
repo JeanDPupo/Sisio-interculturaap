@@ -8,8 +8,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
-import { useThemeColor } from '../hooks/useThemeColor';
+import Animated, { ZoomIn } from 'react-native-reanimated';
+import { useThemeColor } from '../../hooks/useThemeColor';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'outline';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -44,7 +44,6 @@ export const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
 }) => {
   const { colors, isDark } = useThemeColor();
-  const [isPressed, setIsPressed] = useState(false);
 
   const sizeConfig = sizeStyles[size];
 
@@ -116,8 +115,6 @@ export const Button: React.FC<ButtonProps> = ({
         onPress={onPress}
         disabled={disabled || loading}
         activeOpacity={0.8}
-        onPressIn={() => setIsPressed(true)}
-        onPressOut={() => setIsPressed(false)}
       >
         {variant === 'outline' ? (
           <Animated.View

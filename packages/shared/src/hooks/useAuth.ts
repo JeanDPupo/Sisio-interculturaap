@@ -147,6 +147,7 @@ export const useAuth = () => {
     accessToken,
     loading,
     error,
+    setError,
     register,
     login,
     createGuestUser,

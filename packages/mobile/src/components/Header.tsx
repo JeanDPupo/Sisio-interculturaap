@@ -6,9 +6,8 @@ import {
   StyleSheet,
   ViewStyle,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useThemeColor } from '../../hooks/useThemeColor';
+import { useThemeColor } from '../hooks/useThemeColor';
 
 interface HeaderProps {
   title?: string;
