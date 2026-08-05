@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
-from supabase import create_client, Client
 import os
 import uuid
 from datetime import datetime, timedelta
@@ -23,8 +22,10 @@ router = APIRouter(prefix="/sightings", tags=["sightings"])
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-def get_supabase_client() -> Client:
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+from services.local_client import get_client
+
+def get_supabase_client():
+    return get_client()
 
 @router.post("/", response_model=SightingResponse)
 async def create_sighting(

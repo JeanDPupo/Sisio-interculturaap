@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import JSONResponse
-from supabase import create_client, Client
 import os
 import uuid
 from datetime import timedelta
@@ -20,11 +19,13 @@ load_dotenv()
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+from services.local_client import get_client
+
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SUPABASE_KEY"))
 
-def get_supabase_client() -> Client:
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+def get_supabase_client():
+    return get_client()
 
 @router.post("/register", response_model=AuthResponse)
 async def register(user_data: UserCreate):

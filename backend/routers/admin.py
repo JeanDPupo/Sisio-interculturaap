@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
-from supabase import create_client, Client
 import os
 from typing import Optional, List
 from dotenv import load_dotenv
@@ -16,8 +15,10 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-def get_supabase_client() -> Client:
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+from services.local_client import get_client
+
+def get_supabase_client():
+    return get_client()
 
 async def check_is_admin(user_id: Optional[str]) -> bool:
     """

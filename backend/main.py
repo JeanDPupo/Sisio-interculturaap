@@ -10,7 +10,12 @@ from datetime import datetime
 from routers import photo, audio, birds
 from routers import auth, sightings, comments, admin
 
+from services.local_db import init_db
+
 load_dotenv()
+
+# Create SQLite schema + seed if it does not exist yet (local fallback, no Supabase needed)
+init_db()
 
 # Configure logging
 logging.basicConfig(

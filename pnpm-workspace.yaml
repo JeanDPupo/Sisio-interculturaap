@@ -1,8 +1,20 @@
 packages:
   - 'packages/*'
   - 'backend'
+nodeLinker: hoisted
 allowBuilds:
   babylonjs: true
-  esbuild: false
+  esbuild: true
 minimumReleaseAgeExclude:
   - babylonjs@9.9.0
+  - electron-to-chromium@1.5.363
+  - flow-parser@0.315.0
+  - hasown@2.0.4
+  - typed-array-length@1.0.8
+  - zustand@5.0.14
+overrides:
+  metro-cache: ~0.80.8
+  metro: ~0.80.8
+  metro-config: ~0.80.8
+  metro-core: ~0.80.8
+  metro-resolver: ~0.80.8

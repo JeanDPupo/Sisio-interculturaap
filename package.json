@@ -1,5 +1,14 @@
 {
   "dependencies": {
     "babylonjs": "^9.9.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "metro-cache": "~0.80.8",
+      "metro": "~0.80.8",
+      "metro-config": "~0.80.8",
+      "metro-core": "~0.80.8",
+      "metro-resolver": "~0.80.8"
+    }
   }
 }

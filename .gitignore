@@ -39,3 +39,6 @@ pip-delete-this-directory.txt
 .DS_Store
 Thumbs.db
 node_modules
+
+# Local SQLite fallback DB
+backend/sisio_local.db

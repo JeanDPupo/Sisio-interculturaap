@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from supabase import create_client, Client
 import os
 import uuid
 from typing import Optional, List
@@ -15,8 +14,10 @@ router = APIRouter(prefix="/sightings", tags=["comments"])
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-def get_supabase_client() -> Client:
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+from services.local_client import get_client
+
+def get_supabase_client():
+    return get_client()
 
 @router.get("/{sighting_id}/comments", response_model=List[CommentWithUserResponse])
 async def get_comments(sighting_id: str):

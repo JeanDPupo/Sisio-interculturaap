@@ -1,7 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Query
 from typing import Optional, List
 from pydantic import BaseModel
-from supabase import create_client, Client
 import os
 import logging
 import tempfile
@@ -18,8 +17,10 @@ router = APIRouter(prefix="/birds", tags=["Birds"])
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 
-def _get_supabase() -> Client:
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+from services.local_client import get_client
+
+def _get_supabase():
+    return get_client()
 
 def _db_to_response(bird: dict) -> dict:
     """Map a DB row from `aves` table to the API response format (matching frontend Bird type)."""
