@@ -1,10 +1,30 @@
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 export class GroqProvider {
-    name;
-    apiKey;
-    model;
-    _available;
     constructor(config) {
+        Object.defineProperty(this, "name", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "apiKey", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "model", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_available", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         this.name = config.name || 'groq';
         this.apiKey = config.apiKey || '';
         this.model = config.model || 'llama-3.2-11b-vision-preview';
@@ -103,3 +123,4 @@ export class GroqProvider {
         }
     }
 }
+//# sourceMappingURL=GroqProvider.js.map

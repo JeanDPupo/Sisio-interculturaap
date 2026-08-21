@@ -1,1 +1,1 @@
-{"version":3,"file":"useOffline.d.ts","sourceRoot":"","sources":["../../src/hooks/useOffline.ts"],"names":[],"mappings":"AACA,OAAO,EAAmB,gBAAgB,EAAE,MAAM,uBAAuB,CAAC;AAe1E,eAAO,MAAM,UAAU;;;;;;;;;;;CAyHtB,CAAC"}
+{"version":3,"file":"useOffline.d.ts","sourceRoot":"","sources":["../../src/hooks/useOffline.ts"],"names":[],"mappings":"AACA,OAAO,EAAmB,gBAAgB,EAAE,MAAM,uBAAuB,CAAC;AAe1E,eAAO,MAAM,UAAU;;;;;;;+BAkFT,MAAM,aAAa,MAAM,cAAc,MAAM;+BAc7C,MAAM,aAAa,MAAM,cAAc,MAAM;;;CAyB1D,CAAC"}

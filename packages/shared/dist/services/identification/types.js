@@ -1,2 +1,2 @@
-// Types-only file — no runtime exports
 export {};
+//# sourceMappingURL=types.js.map

@@ -42,14 +42,34 @@ export class BirdScene {
     const light2 = new BABYLON.PointLight('light2', new BABYLON.Vector3(0, 5, 5), this.scene);
     light2.intensity = 0.7;
 
-    // Create a placeholder bird model (sphere for now)
-    this.bird3D = BABYLON.MeshBuilder.CreateSphere('bird', { diameter: 2 }, this.scene);
+    // Try to load GLB/GLTF model, fallback to placeholder sphere
+    const modelName = bird.nombre_cientifico?.toLowerCase().replace(/\s+/g, '-') || 'bird';
+    const modelPaths = [
+      `/assets/models/${modelName}.glb`,
+      `/assets/models/${modelName}.gltf`,
+    ];
 
-    // Apply material
-    const material = new BABYLON.StandardMaterial('birdMaterial', this.scene);
-    material.diffuse = new BABYLON.Color3(0.8, 0.6, 0.2);
-    material.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
-    this.bird3D.material = material;
+    let modelLoaded = false;
+    for (const path of modelPaths) {
+      try {
+        const result = await BABYLON.SceneLoader.ImportMeshAsync('', '', path, this.scene);
+        this.bird3D = result.meshes[0];
+        this.bird3D.scaling = new BABYLON.Vector3(1, 1, 1);
+        modelLoaded = true;
+        break;
+      } catch {
+        // Model not found, try next
+      }
+    }
+
+    if (!modelLoaded) {
+      // Placeholder sphere
+      this.bird3D = BABYLON.MeshBuilder.CreateSphere('bird', { diameter: 2 }, this.scene);
+      const material = new BABYLON.StandardMaterial('birdMaterial', this.scene);
+      material.diffuse = new BABYLON.Color3(0.8, 0.6, 0.2);
+      material.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+      this.bird3D.material = material;
+    }
 
     // Create hotspots for ancestral knowledge
     this.createHotspots(bird);

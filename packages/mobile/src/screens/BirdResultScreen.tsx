@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  StyleSheet,
 } from 'react-native';
 import Animated, {
   FadeIn,
@@ -16,24 +17,25 @@ import Animated, {
   useSharedValue,
   withTiming,
   withSpring,
+  Layout,
+  FadeOut,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StyleSheet } from 'react-native';
-import {
-  useBirdStore,
-  useAuthStore,
-  useSightings,
-} from '@sisio/shared';
-import {
-  GlassCard,
-  Button,
-} from '../components';
+import { useBirdStore, useAuthStore, useSightings } from '@sisio/shared';
+import { GlassCard, GradientButton } from '../components';
 import { useThemeColor } from '../hooks';
 
-const { width, height } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
+const COLORS_CONFIG = {
+  bajo: '#4CAF50',
+  medio: '#FFC107',
+  alto: '#F44336',
+};
 
 export const BirdResultScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
@@ -44,23 +46,17 @@ export const BirdResultScreen = ({ navigation }: any) => {
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const scaleValue = useSharedValue(0.3);
+  const scaleValue = useSharedValue(0);
   const opacityValue = useSharedValue(0);
-  const imageBloomValue = useSharedValue(0);
 
   useEffect(() => {
-    scaleValue.value = withSpring(1, { damping: 12 });
+    scaleValue.value = withSpring(1, { damping: 12, stiffness: 100 });
     opacityValue.value = withTiming(1, { duration: 600 });
-    imageBloomValue.value = withTiming(1, { duration: 1000 });
-  }, []);
+  }, [scaleValue, opacityValue]);
 
-  const imageAnimatedStyle = useAnimatedStyle(() => ({
+  const heroStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleValue.value }],
     opacity: opacityValue.value,
-  }));
-
-  const bloomStyle = useAnimatedStyle(() => ({
-    opacity: imageBloomValue.value,
   }));
 
   if (!identificationResult?.bird) {
@@ -70,23 +66,16 @@ export const BirdResultScreen = ({ navigation }: any) => {
       >
         <View style={styles.errorContainer}>
           <Animated.View entering={FadeIn.springify()}>
-            <Feather
-              name="alert-circle"
-              size={64}
-              color={colors.danger}
-            />
-            <Text
-              style={[
-                styles.errorText,
-                { color: colors.muted },
-              ]}
-            >
+            <Feather name="alert-circle" size={64} color={colors.danger} />
+            <Text style={[styles.errorText, { color: colors.muted }]}>
               No hay resultado de identificación
             </Text>
-            <Button
+            <GradientButton
               title="Volver"
               onPress={() => navigation.goBack()}
+              icon="arrow-left"
               style={{ marginTop: 24 }}
+              borderRadius={16}
             />
           </Animated.View>
         </View>
@@ -95,12 +84,8 @@ export const BirdResultScreen = ({ navigation }: any) => {
   }
 
   const bird = identificationResult.bird;
-  const confidence = (identificationResult.confidence || 0) * 100;
-  const riskColor = {
-    bajo: colors.success,
-    medio: colors.warning,
-    alto: colors.danger,
-  }[bird.ecosistema_riesgo || 'bajo'];
+  const confidence = Math.round((identificationResult.confidence || 0) * 100);
+  const riskColor = COLORS_CONFIG[bird.ecosistema_riesgo || 'bajo'];
 
   const handleSaveSighting = async () => {
     setSaving(true);
@@ -123,14 +108,53 @@ export const BirdResultScreen = ({ navigation }: any) => {
     setExpanded(expanded === sectionId ? null : sectionId);
   };
 
+  const sections = [
+    {
+      id: 'significado',
+      icon: 'feather' as const,
+      title: 'Significado Ancestral',
+      content: bird.significado_ancestral,
+      borderColor: '#F5C842',
+      accentColor: colors.accent,
+    },
+    {
+      id: 'cosmovision',
+      icon: 'sun' as const,
+      title: 'Rol en la Cosmovisión',
+      content: bird.rol_cosmovision,
+      borderColor: '#8BC34A',
+      accentColor: colors.primaryLight,
+    },
+    {
+      id: 'historias',
+      icon: 'book' as const,
+      title: 'Historias',
+      content: bird.historias_ancestrales?.join('\n\n'),
+      borderColor: '#2E7D9A',
+      accentColor: colors.secondary,
+    },
+    {
+      id: 'comportamiento',
+      icon: 'wind' as const,
+      title: 'Comportamiento',
+      content: bird.comportamientos,
+      borderColor: colors.muted,
+      accentColor: colors.muted,
+    },
+    {
+      id: 'habitat',
+      icon: 'map' as const,
+      title: 'Hábitat',
+      content: bird.habitat,
+      borderColor: colors.muted,
+      accentColor: colors.muted,
+    },
+  ];
+
   return (
     <SafeAreaView
-      style={[
-        styles.container,
-        { backgroundColor: colors.background },
-      ]}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
-      {/* Header */}
       <Animated.View
         entering={FadeInUp.delay(0).springify()}
         style={styles.header}
@@ -151,46 +175,37 @@ export const BirdResultScreen = ({ navigation }: any) => {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
-          {
-            paddingBottom: insets.bottom + 120,
-          },
+          { paddingBottom: insets.bottom + 120 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Reveal Animation Container */}
         <View style={styles.revealContainer}>
-          {/* Bloom Effect Background */}
-          <Animated.View
-            style={[
-              styles.bloomEffect,
-              { backgroundColor: `${riskColor}20` },
-              bloomStyle,
+          <LinearGradient
+            colors={[
+              `${riskColor}20`,
+              `${riskColor}10`,
+              'transparent',
             ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.bloomEffect}
           />
 
-          {/* Main Reveal Card */}
           <Animated.View
             entering={ZoomIn.delay(200).springify()}
-            style={[styles.revealCard]}
+            style={styles.revealCard}
           >
             <GlassCard
               intensity={60}
               borderRadius={24}
-              gradientColors={isDark
-                ? [
-                  'rgba(45, 80, 22, 0.2)',
-                  'rgba(46, 125, 154, 0.1)',
-                ]
-                : [
-                  'rgba(255, 255, 255, 0.4)',
-                  'rgba(255, 255, 255, 0.1)',
-                ]}
+              gradientColors={
+                isDark
+                  ? ['rgba(45, 80, 22, 0.2)', 'rgba(46, 125, 154, 0.1)']
+                  : ['rgba(255, 255, 255, 0.4)', 'rgba(255, 255, 255, 0.1)']
+              }
             >
               <View style={styles.revealContent}>
-                {/* Bird Image */}
-                <Animated.View
-                  style={[styles.imageWrapper, imageAnimatedStyle]}
-                >
+                <Animated.View style={[styles.imageWrapper, heroStyle]}>
                   {bird.imagen_url ? (
                     <Image
                       source={{ uri: bird.imagen_url }}
@@ -200,254 +215,157 @@ export const BirdResultScreen = ({ navigation }: any) => {
                     <View
                       style={[
                         styles.birdImagePlaceholder,
-                        {
-                          backgroundColor: 'rgba(139, 195, 74, 0.1)',
-                        },
+                        { backgroundColor: 'rgba(139, 195, 74, 0.1)' },
                       ]}
                     >
-                      <Feather
-                        name="feather"
-                        size={64}
-                        color={colors.primaryLight}
-                      />
+                      <Feather name="feather" size={64} color={colors.primaryLight} />
                     </View>
                   )}
                 </Animated.View>
 
-                {/* Names Section */}
                 <Animated.View
                   entering={FadeInUp.delay(400).springify()}
                   style={styles.namesSection}
                 >
-                  <Text
-                    style={[
-                      styles.spanishName,
-                      { color: colors.foreground },
-                    ]}
-                  >
+                  <Text style={[styles.spanishName, { color: colors.foreground }]}>
                     {bird.nombre_espanol || bird.nombre_cientifico}
                   </Text>
 
-                  <Text
-                    style={[
-                      styles.scientificName,
-                      { color: colors.muted },
-                    ]}
-                  >
-                    <Text style={styles.scientificPrefix}>
-                      {bird.nombre_cientifico}
-                    </Text>
+                  <Text style={[styles.scientificName, { color: colors.muted }]}>
+                    {bird.nombre_cientifico}
                   </Text>
 
                   {bird.nombre_nativo && (
-                    <Text
-                      style={[
-                        styles.nativeName,
-                        { color: colors.accent },
-                      ]}
-                    >
-                      {bird.nombre_nativo}
-                      {bird.lengua && ` · ${bird.lengua}`}
-                    </Text>
+                    <View style={styles.nativeNameRow}>
+                      <Text style={[styles.nativeName, { color: colors.accent }]}>
+                        {bird.nombre_nativo}
+                      </Text>
+                      {bird.lengua && (
+                        <Text style={[styles.lenguaText, { color: colors.muted }]}>
+                          · {bird.lengua}
+                        </Text>
+                      )}
+                    </View>
                   )}
                 </Animated.View>
 
-                {/* Confidence Score (Organic Visual) */}
                 <Animated.View
                   entering={FadeInUp.delay(500).springify()}
                   style={styles.confidenceContainer}
                 >
-                  <Text
-                    style={[
-                      styles.confidenceLabel,
-                      { color: colors.muted },
-                    ]}
-                  >
+                  <Text style={[styles.confidenceLabel, { color: colors.muted }]}>
                     CONFIANZA DE IDENTIFICACIÓN
                   </Text>
 
                   <View style={styles.confidenceBarContainer}>
-                    <LinearGradient
-                      colors={[riskColor, riskColor + 'CC']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={[
-                        styles.confidenceBar,
-                        { width: `${confidence}%` },
-                      ]}
-                    />
                     <View
                       style={[
                         styles.confidenceBarBg,
-                        { backgroundColor: colors.border },
-                        StyleSheet.absoluteFillObject,
+                        { backgroundColor: `${colors.border}` },
                       ]}
                     />
+                    <Animated.View
+                      entering={FadeInUp.delay(600).springify()}
+                    >
+                      <LinearGradient
+                        colors={[riskColor, '#D4A017', riskColor]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={[
+                          styles.confidenceBar,
+                          { width: `${confidence}%` },
+                        ]}
+                      />
+                    </Animated.View>
                   </View>
 
-                  <Text
-                    style={[
-                      styles.confidenceValue,
-                      { color: riskColor },
-                    ]}
-                  >
-                    {Math.round(confidence)}%
+                  <Text style={[styles.confidenceValue, { color: riskColor }]}>
+                    {confidence}%
                   </Text>
+                </Animated.View>
+
+                <Animated.View
+                  entering={FadeInUp.delay(700).springify()}
+                  style={styles.riskBadgeContainer}
+                >
+                  <LinearGradient
+                    colors={[`${riskColor}20`, `${riskColor}10`]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[styles.riskBadge, { borderColor: `${riskColor}40` }]}
+                  >
+                    <Feather name="shield" size={16} color={riskColor} />
+                    <Text style={[styles.riskText, { color: riskColor }]}>
+                      Riesgo ecológico: {bird.ecosistema_riesgo?.toUpperCase()}
+                    </Text>
+                    {bird.es_migratoria && (
+                      <Text style={[styles.migrationFlag, { color: colors.muted }]}>
+                        Migratoria
+                      </Text>
+                    )}
+                  </LinearGradient>
                 </Animated.View>
               </View>
             </GlassCard>
           </Animated.View>
         </View>
 
-        {/* Ancestral Knowledge Sections */}
-        {bird.significado_ancestral && (
-          <Animated.View entering={FadeInUp.delay(600).springify()}>
-            <ExpandableSection
-              icon="book"
-              title="Significado Ancestral"
-              content={bird.significado_ancestral}
-              sectionId="significado"
-              expanded={expanded}
-              onToggle={toggleSection}
-              colors={colors}
-              accentColor={colors.accent}
-            />
-          </Animated.View>
-        )}
-
-        {bird.rol_cosmovision && (
-          <Animated.View entering={FadeInUp.delay(650).springify()}>
-            <ExpandableSection
-              icon="sun"
-              title="Rol en la Cosmovisión"
-              content={bird.rol_cosmovision}
-              sectionId="cosmovision"
-              expanded={expanded}
-              onToggle={toggleSection}
-              colors={colors}
-              accentColor={colors.secondaryLight}
-            />
-          </Animated.View>
-        )}
-
-        {bird.habitat && (
-          <Animated.View entering={FadeInUp.delay(700).springify()}>
-            <ExpandableSection
-              icon="map-pin"
-              title="Hábitat"
-              content={bird.habitat}
-              sectionId="habitat"
-              expanded={expanded}
-              onToggle={toggleSection}
-              colors={colors}
-              accentColor={colors.primaryLight}
-            />
-          </Animated.View>
-        )}
-
-        {bird.comportamientos && (
-          <Animated.View entering={FadeInUp.delay(750).springify()}>
-            <ExpandableSection
-              icon="activity"
-              title="Comportamiento"
-              content={bird.comportamientos}
-              sectionId="comportamiento"
-              expanded={expanded}
-              onToggle={toggleSection}
-              colors={colors}
-              accentColor={colors.primaryLight}
-            />
-          </Animated.View>
-        )}
-
-        {bird.historias_ancestrales && bird.historias_ancestrales.length > 0 && (
-          <Animated.View entering={FadeInUp.delay(800).springify()}>
-            <ExpandableSection
-              icon="book-open"
-              title="Historias"
-              content={bird.historias_ancestrales.join('\n\n')}
-              sectionId="historias"
-              expanded={expanded}
-              onToggle={toggleSection}
-              colors={colors}
-              accentColor={colors.accent}
-            />
-          </Animated.View>
-        )}
-
-        {/* Ecosystem Risk Badge */}
-        <Animated.View
-          entering={FadeInUp.delay(900).springify()}
-          style={styles.riskBadgeContainer}
-        >
-          <LinearGradient
-            colors={[`${riskColor}20`, `${riskColor}10`]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[
-              styles.riskBadge,
-              {
-                borderColor: riskColor + '40',
-              },
-            ]}
-          >
-            <View
-              style={[
-                styles.riskDot,
-                { backgroundColor: riskColor },
-              ]}
-            />
-            <Text
-              style={[
-                styles.riskText,
-                { color: riskColor },
-              ]}
-            >
-              Riesgo ecológico: {bird.ecosistema_riesgo.toUpperCase()}
-            </Text>
-            {bird.es_migratoria && (
-              <Text
-                style={[
-                  styles.migrationFlag,
-                  { color: colors.muted },
-                ]}
+        <View style={styles.sectionsContainer}>
+          {sections.map((section, index) => {
+            if (!section.content) return null;
+            return (
+              <Animated.View
+                key={section.id}
+                entering={FadeInUp.delay(700 + index * 80).springify()}
               >
-                Migratoria
-              </Text>
-            )}
-          </LinearGradient>
-        </Animated.View>
+                <ExpandableSection
+                  icon={section.icon}
+                  title={section.title}
+                  content={section.content}
+                  sectionId={section.id}
+                  expanded={expanded}
+                  onToggle={toggleSection}
+                  colors={colors}
+                  accentColor={section.accentColor}
+                  borderColor={section.borderColor}
+                />
+              </Animated.View>
+            );
+          })}
+        </View>
       </ScrollView>
 
-      {/* Action Buttons */}
       <View
         style={[
           styles.actionBar,
           {
-            paddingBottom: insets.bottom + 8,
+            paddingBottom: insets.bottom + 12,
             backgroundColor: colors.background,
-            borderTopColor: colors.border,
           },
         ]}
       >
-        <Button
-          title="Descartar"
-          variant="outline"
-          onPress={() => navigation.goBack()}
-          fullWidth
-        />
-        <Button
+        <GradientButton
           title={saving ? 'Guardando...' : 'Guardar Avistamiento'}
+          icon={saving ? undefined : 'check-circle'}
           loading={saving}
+          disabled={saving}
           onPress={handleSaveSighting}
           fullWidth
+          borderRadius={16}
+        />
+        <GradientButton
+          title="Compartir"
+          icon="share-2"
+          onPress={() => {}}
+          fullWidth
+          colors={['transparent', 'transparent']}
+          borderRadius={16}
         />
       </View>
     </SafeAreaView>
   );
 };
 
-// Expandable Section Component
 interface ExpandableSectionProps {
   icon: keyof typeof Feather.glyphMap;
   title: string;
@@ -457,6 +375,7 @@ interface ExpandableSectionProps {
   onToggle: (id: string) => void;
   colors: any;
   accentColor: string;
+  borderColor?: string;
 }
 
 const ExpandableSection: React.FC<ExpandableSectionProps> = ({
@@ -468,21 +387,23 @@ const ExpandableSection: React.FC<ExpandableSectionProps> = ({
   onToggle,
   colors,
   accentColor,
+  borderColor,
 }) => {
   const isExpanded = expanded === sectionId;
 
   return (
-    <TouchableOpacity
+    <AnimatedTouchable
       onPress={() => onToggle(sectionId)}
       activeOpacity={0.7}
+      layout={Layout.springify()}
     >
       <GlassCard
         intensity={50}
-        style={styles.sectionCard}
-        gradientColors={[
-          `${accentColor}15`,
-          `${accentColor}08`,
-        ]}
+        style={StyleSheet.flatten([
+          styles.sectionCard,
+          borderColor ? { borderLeftWidth: 3, borderLeftColor: borderColor } : {},
+        ])}
+        gradientColors={[`${accentColor}15`, `${accentColor}08`]}
       >
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
@@ -494,47 +415,32 @@ const ExpandableSection: React.FC<ExpandableSectionProps> = ({
             >
               <Feather name={icon} size={18} color={accentColor} />
             </View>
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: colors.foreground },
-              ]}
-            >
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
               {title}
             </Text>
           </View>
           <Animated.View
             style={{
-              transform: [
-                { rotate: isExpanded ? '180deg' : '0deg' },
-              ],
+              transform: [{ rotate: isExpanded ? '180deg' : '0deg' }],
             }}
           >
-            <Feather
-              name="chevron-down"
-              size={20}
-              color={accentColor}
-            />
+            <Feather name="chevron-down" size={20} color={accentColor} />
           </Animated.View>
         </View>
 
         {isExpanded && (
           <Animated.View
             entering={FadeInUp.springify()}
+            exiting={FadeOut.duration(200)}
             style={styles.sectionContentContainer}
           >
-            <Text
-              style={[
-                styles.sectionContent,
-                { color: colors.muted },
-              ]}
-            >
+            <Text style={[styles.sectionContent, { color: colors.muted }]}>
               {content}
             </Text>
           </Animated.View>
         )}
       </GlassCard>
-    </TouchableOpacity>
+    </AnimatedTouchable>
   );
 };
 
@@ -633,14 +539,22 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginBottom: 12,
     textAlign: 'center',
+    fontFamily: 'PlayfairDisplay_700Bold',
   },
-  scientificPrefix: {
-    fontWeight: '500',
+  nativeNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   nativeName: {
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
+    fontFamily: 'Lora_400Regular',
+  },
+  lenguaText: {
+    fontSize: 13,
+    fontStyle: 'italic',
   },
   confidenceContainer: {
     width: '100%',
@@ -665,6 +579,9 @@ const styles = StyleSheet.create({
   },
   confidenceBarBg: {
     position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 4,
   },
   confidenceBar: {
     height: '100%',
@@ -675,61 +592,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-  sectionCard: {
-    marginBottom: 12,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  sectionTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
-  },
-  sectionIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  sectionContentContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  sectionContent: {
-    fontSize: 14,
-    lineHeight: 22,
-  },
   riskBadgeContainer: {
-    marginBottom: 24,
+    width: '100%',
+    marginTop: 16,
   },
   riskBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-  },
-  riskDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
   },
   riskText: {
     fontSize: 13,
@@ -744,11 +618,52 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
+  sectionsContainer: {
+    gap: 12,
+  },
+  sectionCard: {
+    marginBottom: 0,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+  },
+  sectionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  sectionContentContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  sectionContent: {
+    fontSize: 14,
+    lineHeight: 22,
+  },
   actionBar: {
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: 16,
     paddingTop: 12,
-    borderTopWidth: 1,
   },
 });

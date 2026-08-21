@@ -18,61 +18,61 @@ import Animated, {
   useSharedValue,
   withRepeat,
   withTiming,
+  withDelay,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBirdStore, useOfflineStore, apiService } from '@sisio/shared';
-import { Button, GlassCard, Header } from '../components';
+import { useBird, useOffline } from '@sisio/shared';
+import { GlassCard, GradientButton, AudioBars } from '../components';
 import { useThemeColor } from '../hooks';
-
-const WAVE_BARS = 28;
 
 export const AudioCaptureScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
-  const { colors } = useThemeColor();
+  const { colors, isDark } = useThemeColor();
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
-  const [waveData, setWaveData] = useState<number[]>(
-    Array.from({ length: WAVE_BARS }, (_, i) => 0.18 + (i % 5) * 0.08)
-  );
   const durationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-  const waveInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-  const { setIdentificationResult, setLoading: setBirdLoading } = useBirdStore();
-  const { isOnline, addToQueue } = useOfflineStore();
+  const { identifyFromAudio } = useBird();
+  const { addAudioToQueue } = useOffline();
+  const { isOnline } = useOffline();
 
+  const ring1 = useSharedValue(0);
+  const ring2 = useSharedValue(0);
+  const ring3 = useSharedValue(0);
   const pulse = useSharedValue(1);
-  const ring = useSharedValue(0);
 
   useEffect(() => {
     if (isRecording) {
       pulse.value = withRepeat(withTiming(1.08, { duration: 620 }), -1, true);
-      ring.value = withRepeat(withTiming(1, { duration: 1400 }), -1, false);
-      waveInterval.current = setInterval(() => {
-        setWaveData((bars) =>
-          bars.map((_, i) => {
-            const seed = (Date.now() / 220 + i * 1.7) % Math.PI;
-            return 0.2 + Math.abs(Math.sin(seed)) * 0.78;
-          })
-        );
-      }, 180);
+
+      ring1.value = withRepeat(
+        withTiming(1, { duration: 1800 }),
+        -1,
+        false
+      );
+      ring2.value = withRepeat(
+        withDelay(600, withTiming(1, { duration: 1800 })),
+        -1,
+        false
+      );
+      ring3.value = withRepeat(
+        withDelay(1200, withTiming(1, { duration: 1800 })),
+        -1,
+        false
+      );
     } else {
       pulse.value = withTiming(1, { duration: 200 });
-      ring.value = withTiming(0, { duration: 200 });
-      if (waveInterval.current) clearInterval(waveInterval.current);
-      setWaveData(Array.from({ length: WAVE_BARS }, (_, i) => 0.16 + (i % 4) * 0.07));
+      ring1.value = withTiming(0, { duration: 200 });
+      ring2.value = withTiming(0, { duration: 200 });
+      ring3.value = withTiming(0, { duration: 200 });
     }
-
-    return () => {
-      if (waveInterval.current) clearInterval(waveInterval.current);
-    };
-  }, [isRecording, pulse, ring]);
+  }, [isRecording, pulse, ring1, ring2, ring3]);
 
   useEffect(() => {
     return () => {
       if (durationInterval.current) clearInterval(durationInterval.current);
-      if (waveInterval.current) clearInterval(waveInterval.current);
     };
   }, []);
 
@@ -80,9 +80,19 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
     transform: [{ scale: pulse.value }],
   }));
 
-  const ringStyle = useAnimatedStyle(() => ({
-    opacity: isRecording ? 1 - ring.value : 0,
-    transform: [{ scale: 1 + ring.value * 0.9 }],
+  const ring1Style = useAnimatedStyle(() => ({
+    opacity: isRecording ? 0.8 - ring1.value * 0.8 : 0,
+    transform: [{ scale: 1 + ring1.value * 2 }],
+  }));
+
+  const ring2Style = useAnimatedStyle(() => ({
+    opacity: isRecording ? 0.6 - ring2.value * 0.6 : 0,
+    transform: [{ scale: 1 + ring2.value * 2 }],
+  }));
+
+  const ring3Style = useAnimatedStyle(() => ({
+    opacity: isRecording ? 0.4 - ring3.value * 0.4 : 0,
+    transform: [{ scale: 1 + ring3.value * 2 }],
   }));
 
   const requestAudioPermission = async () => {
@@ -111,10 +121,9 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
   const startRecording = async () => {
     const hasPermission = await requestAudioPermission();
     if (!hasPermission) {
-      alert('Se necesita permiso de microfono');
+      alert('Se necesita permiso de micrófono');
       return;
     }
-
     try {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
@@ -131,7 +140,7 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
         setDuration((prev) => prev + 100);
       }, 100);
     } catch {
-      alert('Error al iniciar grabacion');
+      alert('Error al iniciar grabación');
     }
   };
 
@@ -143,19 +152,19 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
       setIsRecording(false);
       setRecording(recording);
     } catch {
-      alert('Error al detener grabacion');
+      alert('Error al detener grabación');
     }
   };
 
   const resetRecording = () => {
     setRecording(null);
     setDuration(0);
+    setIsRecording(false);
   };
 
   const handleIdentify = async () => {
     if (!recording) return;
     setLoading(true);
-    setBirdLoading(true);
     try {
       const uri = recording.getURI();
       if (!uri) return;
@@ -165,27 +174,22 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
         name: `audio_${Date.now()}.wav`,
       } as any;
 
-      if (isOnline && location) {
-        const response = await apiService.identifyBirdFromAudio(
+      if (isOnline) {
+        const result = await identifyFromAudio(
           file,
-          location.coords.latitude,
-          location.coords.longitude
+          location?.coords.latitude,
+          location?.coords.longitude
         );
-        setIdentificationResult(response.data);
-        navigation.navigate('BirdResult');
-      } else if (!isOnline) {
-        addToQueue({
-          id: `audio_${Date.now()}`,
-          action: 'identify_audio',
-          data: {
-            audio: uri,
-            latitude: location?.coords.latitude,
-            longitude: location?.coords.longitude,
-          },
-          timestamp: new Date().toISOString(),
-          retries: 0,
-        });
-        alert('Audio guardado en cola. Se identificara cuando haya conexion.');
+        if (result?.bird) {
+          navigation.navigate('BirdResult');
+        }
+      } else {
+        addAudioToQueue(
+          uri,
+          location?.coords.latitude,
+          location?.coords.longitude
+        );
+        alert('Audio guardado en cola. Se identificará cuando haya conexión.');
         resetRecording();
         navigation.goBack();
       }
@@ -193,18 +197,18 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
       alert('Error al identificar.');
     } finally {
       setLoading(false);
-      setBirdLoading(false);
     }
   };
 
   const formatDuration = (ms: number) => {
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    return `${minutes}:${(seconds % 60).toString().padStart(2, '0')}`;
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const statusLabel = isRecording
-    ? 'Escuchando la Sierra'
+    ? 'Grabando...'
     : recording
       ? 'Audio listo'
       : 'Listo para grabar';
@@ -217,75 +221,63 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
       ]}
     >
       <LinearGradient
-        colors={[`${colors.secondary}14`, `${colors.primaryLight}08`, 'transparent']}
+        colors={[`${colors.secondaryDark}14`, `${colors.primaryLight}08`, 'transparent']}
         style={StyleSheet.absoluteFill}
       />
 
-      <Header
-        title="Sonido del Ave"
-        subtitle={statusLabel}
-        leftIcon={<Feather name="chevron-left" size={24} color={colors.foreground} />}
-        onLeftPress={() => navigation.goBack()}
-      />
+      <Animated.View
+        entering={FadeInDown.delay(0).springify()}
+        style={styles.header}
+      >
+        <Feather
+          name="chevron-left"
+          size={24}
+          color={colors.foreground}
+          onPress={() => navigation.goBack()}
+        />
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>
+          Sonido del Ave
+        </Text>
+        <View style={{ width: 24 }} />
+      </Animated.View>
 
       <View style={styles.content}>
         <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <GlassCard
-            intensity={70}
-            borderRadius={20}
-            gradientColors={[`${colors.secondary}12`, `${colors.primaryLight}08`]}
-          >
-            <View style={styles.waveCard}>
-              <Text style={[styles.kicker, { color: colors.accent }]}>
-                IDENTIFICACION POR CANTO
-              </Text>
-              <Text style={[styles.instructions, { color: colors.muted }]}>
-                Graba entre 5 y 20 segundos del canto, evitando viento o voces cercanas.
-              </Text>
-
-              <View style={styles.waveform}>
-                {waveData.map((value, index) => (
-                  <LinearGradient
-                    key={index}
-                    colors={[colors.primaryLight, colors.accent]}
-                    style={[
-                      styles.waveBar,
-                      {
-                        height: 18 + value * 92,
-                        opacity: isRecording ? 0.95 : 0.35,
-                      },
-                    ]}
-                  />
-                ))}
-              </View>
-
-              <View style={styles.metaRow}>
-                <View style={styles.metaItem}>
-                  <Feather name="clock" size={15} color={colors.secondary} />
-                  <Text style={[styles.metaText, { color: colors.foreground }]}>
-                    {formatDuration(duration)}
-                  </Text>
-                </View>
-                <View style={styles.metaItem}>
-                  <Feather name="map-pin" size={15} color={colors.secondary} />
-                  <Text style={[styles.metaText, { color: colors.foreground }]}>
-                    {location ? 'Ubicacion capturada' : 'Sin ubicacion'}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </GlassCard>
+          <Text style={[styles.kicker, { color: colors.accent }]}>
+            IDENTIFICACIÓN POR CANTO
+          </Text>
         </Animated.View>
 
-        <Animated.View entering={ZoomIn.delay(240).springify()} style={styles.recArea}>
+        <Animated.View entering={FadeInUp.delay(200).springify()}>
+          <AudioBars
+            isRecording={isRecording}
+            barCount={20}
+          />
+        </Animated.View>
+
+        <Animated.View entering={FadeInUp.delay(250).springify()}>
+          <Text style={[styles.timerText, { color: colors.foreground }]}>
+            {formatDuration(duration)}
+          </Text>
+        </Animated.View>
+
+        <Animated.View
+          entering={ZoomIn.delay(300).springify()}
+          style={styles.recArea}
+        >
           <Animated.View
             pointerEvents="none"
-            style={[
-              styles.ring,
-              { borderColor: colors.danger },
-              ringStyle,
-            ]}
+            style={[styles.ring, { borderColor: colors.danger }, ring1Style]}
           />
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.ring, { borderColor: colors.danger }, ring2Style]}
+          />
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.ring, { borderColor: colors.danger }, ring3Style]}
+          />
+
           <Animated.View style={pulseStyle}>
             <TouchableOpacity
               activeOpacity={0.88}
@@ -298,49 +290,66 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
                     ? colors.danger
                     : recording
                       ? colors.success
-                      : colors.primaryLight,
+                      : colors.accent,
                 },
               ]}
             >
-              <Feather
-                name={isRecording ? 'square' : recording ? 'check' : 'mic'}
-                size={34}
-                color="#FFFFFF"
-              />
+              <LinearGradient
+                colors={
+                  isRecording
+                    ? ['#F44336', '#D32F2F']
+                    : recording
+                      ? ['#4CAF50', '#388E3C']
+                      : ['#D4A017', '#F5C842']
+                }
+                style={styles.recordButtonGradient}
+              >
+                <Feather
+                  name={isRecording ? 'square' : recording ? 'check' : 'mic'}
+                  size={34}
+                  color="#FFFFFF"
+                />
+              </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
 
           <Text style={[styles.recordTitle, { color: colors.foreground }]}>
-            {isRecording ? 'Grabando canto' : recording ? 'Grabacion completa' : 'Toca para grabar'}
+            {isRecording ? 'Grabando canto' : recording ? 'Grabación completa' : 'Toca para grabar'}
           </Text>
           <Text style={[styles.recordHint, { color: colors.muted }]}>
             {isRecording
-              ? 'Toca el boton para detener'
+              ? 'Toca el botón para detener'
               : recording
                 ? 'Puedes identificar o descartar este audio'
                 : 'Mantente cerca del ave y conserva silencio'}
           </Text>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(360).springify()} style={styles.actions}>
-          {recording && !isRecording ? (
-            <>
-              <Button
-                title="Descartar"
-                variant="outline"
-                onPress={resetRecording}
-                disabled={loading}
-                fullWidth
-              />
-              <Button
-                title={loading ? 'Analizando...' : 'Identificar Ave'}
-                loading={loading}
-                onPress={handleIdentify}
-                disabled={loading}
-                fullWidth
-              />
-            </>
-          ) : (
+        {recording && !isRecording && (
+          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.actions}>
+            <GradientButton
+              title="Descartar"
+              icon="trash-2"
+              onPress={resetRecording}
+              disabled={loading}
+              fullWidth
+              colors={['rgba(244, 67, 54, 0.6)', 'rgba(244, 67, 54, 0.4)']}
+              borderRadius={16}
+            />
+            <GradientButton
+              title={loading ? 'Analizando...' : 'Identificar'}
+              icon={loading ? undefined : 'search'}
+              loading={loading}
+              disabled={loading}
+              onPress={handleIdentify}
+              fullWidth
+              borderRadius={16}
+            />
+          </Animated.View>
+        )}
+
+        {!recording && !isRecording && (
+          <Animated.View entering={FadeInUp.delay(500).springify()}>
             <GlassCard intensity={45} borderRadius={14}>
               <View style={styles.tipBox}>
                 <Feather name="volume-2" size={18} color={colors.accent} />
@@ -349,8 +358,8 @@ export const AudioCaptureScreen = ({ navigation }: any) => {
                 </Text>
               </View>
             </GlassCard>
-          )}
-        </Animated.View>
+          </Animated.View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -360,72 +369,72 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
   content: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 20,
     justifyContent: 'space-between',
-  },
-  waveCard: {
-    padding: 18,
   },
   kicker: {
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1,
-    marginBottom: 8,
+    textAlign: 'center',
+    marginBottom: 16,
   },
-  instructions: {
-    fontSize: 13,
-    lineHeight: 19,
-    marginBottom: 22,
-  },
-  waveform: {
-    height: 136,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-    marginBottom: 20,
-  },
-  waveBar: {
-    width: 7,
-    borderRadius: 5,
-  },
-  metaRow: {
-    gap: 10,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  metaText: {
-    fontSize: 13,
-    fontWeight: '600',
+  timerText: {
+    fontSize: 42,
+    fontWeight: '200',
+    fontFamily: 'JetBrainsMono_400Regular',
+    textAlign: 'center',
+    marginVertical: 12,
+    letterSpacing: 4,
   },
   recArea: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 220,
+    minHeight: 200,
+    position: 'relative',
   },
   ring: {
     position: 'absolute',
-    width: 132,
-    height: 132,
-    borderRadius: 66,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     borderWidth: 2,
   },
   recordButton: {
-    width: 112,
-    height: 112,
-    borderRadius: 56,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 8,
+    overflow: 'hidden',
+  },
+  recordButtonGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   recordTitle: {
     fontSize: 20,
@@ -445,12 +454,10 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   tipBox: {
-    minHeight: 58,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    padding: 14,
   },
   tipText: {
     flex: 1,

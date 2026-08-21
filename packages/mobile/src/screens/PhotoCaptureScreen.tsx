@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   Image,
   SafeAreaView,
   StyleSheet,
+  ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import Animated, {
   FadeInUp,
@@ -15,15 +16,15 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withTiming,
+  withDelay,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { useBirdStore, useOfflineStore, apiService } from '@sisio/shared';
-import { Button, GlassCard, Header } from '../components';
+import { useBird, useOffline, useBirdStore } from '@sisio/shared';
+import { GlassCard, GradientButton, ScanLine } from '../components';
 import { useThemeColor } from '../hooks';
 
 export const PhotoCaptureScreen = ({ navigation }: any) => {
@@ -32,9 +33,9 @@ export const PhotoCaptureScreen = ({ navigation }: any) => {
   const [photo, setPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
-  const { setIdentificationResult, setLoading: setBirdLoading } = useBirdStore();
-  const { isOnline } = useOfflineStore();
-  const { addToQueue } = useOfflineStore();
+  const { identifyFromPhoto } = useBird();
+  const { addPhotoToQueue } = useOffline();
+  const { isOnline } = useOffline();
 
   const requestCameraPermission = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -55,7 +56,7 @@ export const PhotoCaptureScreen = ({ navigation }: any) => {
     return null;
   };
 
-  const handleTakePhoto = async () => {
+  const handleTakePhoto = useCallback(async () => {
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) {
       alert('Se necesita permiso de cámara');
@@ -75,9 +76,9 @@ export const PhotoCaptureScreen = ({ navigation }: any) => {
     } catch (error) {
       alert('Error al capturar foto');
     }
-  };
+  }, []);
 
-  const handleSelectFromGallery = async () => {
+  const handleSelectFromGallery = useCallback(async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -92,40 +93,33 @@ export const PhotoCaptureScreen = ({ navigation }: any) => {
     } catch (error) {
       alert('Error al seleccionar foto');
     }
-  };
+  }, []);
 
-  const handleIdentify = async () => {
+  const handleIdentify = useCallback(async () => {
     if (!photo) return;
     setLoading(true);
-    setBirdLoading(true);
     try {
-      const uriParts = photo.split('.');
-      const fileType = uriParts[uriParts.length - 1];
       const file = {
         uri: photo,
-        type: `image/${fileType}`,
-        name: `photo_${Date.now()}.${fileType}`,
+        type: 'image/jpeg',
+        name: `photo_${Date.now()}.jpg`,
       } as any;
-      if (isOnline && location) {
-        const response = await apiService.identifyBirdFromPhoto(
+
+      if (isOnline) {
+        const result = await identifyFromPhoto(
           file,
-          location.coords.latitude,
-          location.coords.longitude
+          location?.coords.latitude,
+          location?.coords.longitude
         );
-        setIdentificationResult(response.data);
-        navigation.navigate('BirdResult');
-      } else if (!isOnline) {
-        addToQueue({
-          id: `photo_${Date.now()}`,
-          action: 'identify_photo',
-          data: {
-            photo,
-            latitude: location?.coords.latitude,
-            longitude: location?.coords.longitude,
-          },
-          timestamp: new Date().toISOString(),
-          retries: 0,
-        });
+        if (result?.bird) {
+          navigation.navigate('BirdResult');
+        }
+      } else {
+        addPhotoToQueue(
+          photo,
+          location?.coords.latitude,
+          location?.coords.longitude
+        );
         alert('Foto guardada en cola. Se identificará cuando haya conexión.');
         setPhoto(null);
         navigation.goBack();
@@ -134,9 +128,8 @@ export const PhotoCaptureScreen = ({ navigation }: any) => {
       alert('Error al identificar. Intenta de nuevo.');
     } finally {
       setLoading(false);
-      setBirdLoading(false);
     }
-  };
+  }, [photo, isOnline, location, identifyFromPhoto, addPhotoToQueue, navigation]);
 
   return (
     <SafeAreaView
@@ -145,29 +138,93 @@ export const PhotoCaptureScreen = ({ navigation }: any) => {
         { backgroundColor: colors.background, paddingTop: insets.top },
       ]}
     >
-      <Header
-        title="Capturar Foto"
-        leftIcon={<Feather name="chevron-left" size={24} color={colors.foreground} />}
-        onLeftPress={() => navigation.goBack()}
+      <LinearGradient
+        colors={[
+          `${colors.secondaryDark}14`,
+          `${colors.primaryLight}08`,
+          'transparent',
+        ]}
+        style={StyleSheet.absoluteFill}
       />
 
-      {photo ? (
-        <PreviewSection
-          photo={photo}
-          location={location}
-          loading={loading}
-          colors={colors}
-          isDark={isDark}
-          onChangePhoto={() => setPhoto(null)}
-          onIdentify={handleIdentify}
-        />
-      ) : (
-        <CaptureSection
-          colors={colors}
-          isDark={isDark}
-          onTakePhoto={handleTakePhoto}
-          onSelectFromGallery={handleSelectFromGallery}
-        />
+      <Animated.View
+        entering={FadeInDown.delay(0).springify()}
+        style={styles.header}
+      >
+        <Animated.View
+          entering={FadeInUp.delay(50).springify()}
+        >
+          <Feather
+            name="chevron-left"
+            size={24}
+            color={colors.foreground}
+            onPress={() => navigation.goBack()}
+          />
+        </Animated.View>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>
+          Capturar Foto
+        </Text>
+        <View style={{ width: 24 }} />
+      </Animated.View>
+
+      <ScrollView
+        style={styles.scrollArea}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 24 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {photo ? (
+          <PreviewSection
+            photo={photo}
+            location={location}
+            loading={loading}
+            colors={colors}
+            isDark={isDark}
+            onChangePhoto={() => setPhoto(null)}
+            onIdentify={handleIdentify}
+          />
+        ) : (
+          <CaptureSection
+            colors={colors}
+            isDark={isDark}
+            onTakePhoto={handleTakePhoto}
+            onSelectFromGallery={handleSelectFromGallery}
+          />
+        )}
+
+        <Animated.View entering={FadeInUp.delay(500).springify()}>
+          <GlassCard
+            intensity={45}
+            borderRadius={14}
+            gradientColors={[`${colors.accent}10`, `${colors.accent}05`]}
+          >
+            <View style={styles.tipBox}>
+              <Feather name="info" size={18} color={colors.accent} />
+              <Text style={[styles.tipText, { color: colors.muted }]}>
+                Captura el ave desde un ángulo frontal. Evita fondos oscuros
+                o movimientos bruscos para mejores resultados.
+              </Text>
+            </View>
+          </GlassCard>
+        </Animated.View>
+      </ScrollView>
+
+      {photo && (
+        <Animated.View
+          entering={FadeInUp.delay(300).springify()}
+          style={[styles.identifyBar, { paddingBottom: insets.bottom + 8 }]}
+        >
+          <GradientButton
+            title={loading ? 'Identificando...' : 'Identificar'}
+            icon={loading ? undefined : 'search'}
+            loading={loading}
+            disabled={!photo || loading}
+            onPress={handleIdentify}
+            borderRadius={16}
+          />
+        </Animated.View>
       )}
     </SafeAreaView>
   );
@@ -192,21 +249,50 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
   onChangePhoto,
   onIdentify,
 }) => {
+  const pulse = useSharedValue(1);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withTiming(1.1, { duration: 1200 }),
+      -1,
+      true
+    );
+  }, [pulse]);
+
+  const cornerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+  }));
+
   return (
     <Animated.View
       entering={FadeInUp.delay(100).springify()}
       style={styles.previewContainer}
     >
-      {/* Image Preview */}
       <View style={styles.imageWrapper}>
         <Image source={{ uri: photo }} style={styles.preview} />
 
+        <View style={styles.scanArea}>
+          <ScanLine
+            active={true}
+            color={colors.primaryLight}
+            style={{ width: 260, height: 220 }}
+          />
+
+          <Animated.View style={[styles.cornerTL, cornerStyle]} />
+          <Animated.View style={[styles.cornerTR, cornerStyle]} />
+          <Animated.View style={[styles.cornerBL, cornerStyle]} />
+          <Animated.View style={[styles.cornerBR, cornerStyle]} />
+        </View>
+
         {loading && (
-          <BlurView intensity={80} style={styles.loadingOverlay}>
+          <View style={styles.loadingOverlay}>
             <View style={styles.loadingContent}>
-              <View style={styles.spinner}>
-                <Feather name="loader" size={32} color={colors.accent} />
-              </View>
+              <Animated.Text
+                entering={ZoomIn.springify()}
+                style={styles.spinBird}
+              >
+                🐦
+              </Animated.Text>
               <Text style={[styles.loadingText, { color: colors.foreground }]}>
                 Analizando foto...
               </Text>
@@ -214,21 +300,17 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
                 Identificando ave
               </Text>
             </View>
-          </BlurView>
+          </View>
         )}
       </View>
 
-      {/* Location Badge */}
       <Animated.View entering={FadeInUp.delay(200).springify()}>
         <GlassCard
           intensity={50}
           borderRadius={12}
-          gradientColors={[
-            `${colors.secondary}10`,
-            `${colors.secondary}05`,
-          ]}
+          gradientColors={[`${colors.secondary}10`, `${colors.secondary}05`]}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, gap: 8 }}>
+          <View style={styles.locationRow}>
             <Feather name="map-pin" size={16} color={colors.secondary} />
             <Text style={{ color: colors.muted, fontSize: 13 }}>
               {location ? 'Ubicación capturada' : 'Sin ubicación'}
@@ -237,24 +319,18 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
         </GlassCard>
       </Animated.View>
 
-      {/* Action Buttons */}
       <Animated.View
         entering={FadeInUp.delay(300).springify()}
         style={styles.actionButtons}
       >
-        <Button
+        <GradientButton
           title="Cambiar Foto"
-          variant="outline"
+          icon="refresh-cw"
           onPress={onChangePhoto}
           disabled={loading}
           fullWidth
-        />
-        <Button
-          title={loading ? 'Analizando...' : 'Identificar Ave'}
-          loading={loading}
-          onPress={onIdentify}
-          disabled={loading}
-          fullWidth
+          colors={['transparent', 'transparent']}
+          borderRadius={12}
         />
       </Animated.View>
     </Animated.View>
@@ -274,35 +350,51 @@ const CaptureSection: React.FC<CaptureSectionProps> = ({
   onTakePhoto,
   onSelectFromGallery,
 }) => {
+  const pulse = useSharedValue(1);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withTiming(1.08, { duration: 1500 }),
+      -1,
+      true
+    );
+  }, [pulse]);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+  }));
+
   return (
     <Animated.View
       entering={FadeInUp.delay(100).springify()}
-      style={[styles.captureContainer, { justifyContent: 'center' }]}
+      style={styles.captureContainer}
     >
-      {/* Animated Viewfinder */}
-      <ViewfinderAnimated colors={colors} />
+      <Animated.View
+        entering={ZoomIn.delay(150).springify()}
+        style={styles.viewfinderWrapper}
+      >
+        <Animated.View style={[styles.viewfinderPulse, pulseStyle]}>
+          <View style={[styles.viewfinder, { borderColor: colors.primaryLight }]}>
+            <View style={[styles.cornerInner, styles.cornerTopLeft, { backgroundColor: colors.primaryLight }]} />
+            <View style={[styles.cornerInner, styles.cornerTopRight, { backgroundColor: colors.primaryLight }]} />
+            <View style={[styles.cornerInner, styles.cornerBottomLeft, { backgroundColor: colors.primaryLight }]} />
+            <View style={[styles.cornerInner, styles.cornerBottomRight, { backgroundColor: colors.primaryLight }]} />
+          </View>
+        </Animated.View>
+        <Feather name="camera" size={48} color={colors.primaryLight} style={{ marginTop: 16 }} />
+      </Animated.View>
 
-      {/* Description */}
       <Animated.View entering={FadeInUp.delay(300).springify()}>
-        <Text
-          style={[
-            styles.emptyText,
-            { color: colors.muted },
-          ]}
-        >
+        <Text style={[styles.emptyText, { color: colors.muted }]}>
           Captura o selecciona una foto{'\n'}del ave para identificarla
         </Text>
       </Animated.View>
 
-      {/* CTA Buttons */}
       <Animated.View
         entering={FadeInUp.delay(400).springify()}
         style={styles.buttonContainer}
       >
-        <TouchableOpacity
-          onPress={onTakePhoto}
-          activeOpacity={0.9}
-        >
+        <TouchableOpacity onPress={onTakePhoto} activeOpacity={0.9}>
           <LinearGradient
             colors={[
               'rgba(45, 80, 22, 0.4)',
@@ -310,50 +402,26 @@ const CaptureSection: React.FC<CaptureSectionProps> = ({
             ]}
             style={styles.ctaButton}
           >
-            <View
-              style={{
-                alignItems: 'center',
-                gap: 12,
-              }}
-            >
+            <View style={styles.ctaInner}>
               <View
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 28,
-                  backgroundColor: 'rgba(139, 195, 74, 0.2)',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
+                style={[
+                  styles.ctaIconCircle,
+                  { backgroundColor: 'rgba(139, 195, 74, 0.2)' },
+                ]}
               >
                 <Feather name="camera" size={28} color={colors.primaryLight} />
               </View>
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '700',
-                  color: colors.foreground,
-                }}
-              >
+              <Text style={[styles.ctaTitle, { color: colors.foreground }]}>
                 Tomar Foto
               </Text>
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: colors.muted,
-                  textAlign: 'center',
-                }}
-              >
+              <Text style={[styles.ctaSubtitle, { color: colors.muted }]}>
                 Usa tu cámara
               </Text>
             </View>
           </LinearGradient>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={onSelectFromGallery}
-          activeOpacity={0.9}
-        >
+        <TouchableOpacity onPress={onSelectFromGallery} activeOpacity={0.9}>
           <LinearGradient
             colors={[
               'rgba(212, 160, 23, 0.4)',
@@ -361,40 +429,19 @@ const CaptureSection: React.FC<CaptureSectionProps> = ({
             ]}
             style={styles.ctaButton}
           >
-            <View
-              style={{
-                alignItems: 'center',
-                gap: 12,
-              }}
-            >
+            <View style={styles.ctaInner}>
               <View
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 28,
-                  backgroundColor: 'rgba(245, 200, 66, 0.2)',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
+                style={[
+                  styles.ctaIconCircle,
+                  { backgroundColor: 'rgba(245, 200, 66, 0.2)' },
+                ]}
               >
                 <Feather name="image" size={28} color={colors.accent} />
               </View>
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '700',
-                  color: colors.foreground,
-                }}
-              >
+              <Text style={[styles.ctaTitle, { color: colors.foreground }]}>
                 Galería
               </Text>
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: colors.muted,
-                  textAlign: 'center',
-                }}
-              >
+              <Text style={[styles.ctaSubtitle, { color: colors.muted }]}>
                 Selecciona una foto
               </Text>
             </View>
@@ -405,109 +452,34 @@ const CaptureSection: React.FC<CaptureSectionProps> = ({
   );
 };
 
-// Viewfinder with animation
-const ViewfinderAnimated: React.FC<{ colors: any }> = ({ colors }) => {
-  const pulse = useSharedValue(1);
-  const opacity = useSharedValue(0.3);
-
-  useEffect(() => {
-    pulse.value = withRepeat(
-      withTiming(1.1, { duration: 1500 }),
-      -1,
-      true
-    );
-    opacity.value = withRepeat(
-      withTiming(0.8, { duration: 1500 }),
-      -1,
-      true
-    );
-  }, []);
-
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulse.value }],
-    opacity: opacity.value,
-  }));
-
-  return (
-    <Animated.View entering={ZoomIn.delay(150).springify()} style={styles.viewfinderWrapper}>
-      <Animated.View style={[styles.viewfinderPulse, pulseStyle]}>
-        <View style={[styles.viewfinder, { borderColor: colors.primaryLight }]}>
-          {/* Corner indicators */}
-          {[0, 1, 2, 3].map((i) => (
-            <View
-              key={i}
-              style={[
-                styles.corner,
-                { borderColor: colors.primaryLight },
-                i === 0 && styles.cornerTopLeft,
-                i === 1 && styles.cornerTopRight,
-                i === 2 && styles.cornerBottomLeft,
-                i === 3 && styles.cornerBottomRight,
-              ]}
-            />
-          ))}
-        </View>
-      </Animated.View>
-      <Feather name="camera" size={48} color={colors.primaryLight} style={{ marginTop: 16 }} />
-    </Animated.View>
-  );
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  captureContainer: {
-    flex: 1,
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 24,
-  },
-  previewContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
   },
-  imageWrapper: {
-    flex: 1,
-    position: 'relative',
-    marginBottom: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  preview: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 16,
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingContent: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  spinner: {
-    opacity: 0.8,
-  },
-  loadingText: {
+  headerTitle: {
     fontSize: 16,
     fontWeight: '600',
   },
-  loadingSubtext: {
-    fontSize: 12,
+  scrollArea: {
+    flex: 1,
   },
-  actionButtons: {
-    width: '100%',
-    gap: 12,
-    marginBottom: 16,
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  captureContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 24,
   },
   viewfinderWrapper: {
     alignItems: 'center',
@@ -523,35 +495,31 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     position: 'relative',
   },
-  corner: {
+  cornerInner: {
     position: 'absolute',
-    width: 20,
-    height: 20,
-    borderWidth: 2,
+    width: 24,
+    height: 4,
+    borderRadius: 2,
   },
   cornerTopLeft: {
     top: -2,
     left: -2,
-    borderRightWidth: 0,
-    borderBottomWidth: 0,
+    transform: [{ rotate: '-45deg' }],
   },
   cornerTopRight: {
     top: -2,
     right: -2,
-    borderLeftWidth: 0,
-    borderBottomWidth: 0,
+    transform: [{ rotate: '45deg' }],
   },
   cornerBottomLeft: {
     bottom: -2,
     left: -2,
-    borderRightWidth: 0,
-    borderTopWidth: 0,
+    transform: [{ rotate: '45deg' }],
   },
   cornerBottomRight: {
     bottom: -2,
     right: -2,
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
+    transform: [{ rotate: '-45deg' }],
   },
   emptyText: {
     fontSize: 15,
@@ -569,5 +537,148 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  ctaInner: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  ctaIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ctaTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  ctaSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  previewContainer: {
+    paddingHorizontal: 0,
+    paddingVertical: 16,
+    gap: 12,
+  },
+  imageWrapper: {
+    width: '100%',
+    height: 280,
+    position: 'relative',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  preview: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
+  },
+  scanArea: {
+    position: 'absolute',
+    top: 30,
+    left: 30,
+    right: 30,
+    bottom: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cornerTL: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 32,
+    height: 4,
+    backgroundColor: '#8BC34A',
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+    transform: [{ rotate: '-90deg' }],
+    transformOrigin: 'top left',
+  },
+  cornerTR: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 32,
+    height: 4,
+    backgroundColor: '#8BC34A',
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+    transform: [{ rotate: '0deg' }],
+    transformOrigin: 'top right',
+  },
+  cornerBL: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: 32,
+    height: 4,
+    backgroundColor: '#8BC34A',
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
+    transform: [{ rotate: '180deg' }],
+    transformOrigin: 'bottom left',
+  },
+  cornerBR: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 4,
+    backgroundColor: '#8BC34A',
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
+    transform: [{ rotate: '90deg' }],
+    transformOrigin: 'bottom right',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(13, 27, 15, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+  },
+  loadingContent: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  spinBird: {
+    fontSize: 48,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loadingSubtext: {
+    fontSize: 12,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    gap: 8,
+  },
+  actionButtons: {
+    width: '100%',
+  },
+  identifyBar: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    backgroundColor: 'transparent',
+  },
+  tipBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 14,
+  },
+  tipText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
   },
 });

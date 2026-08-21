@@ -1,557 +1,544 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   Dimensions,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-  KeyboardAvoidingView,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
   SafeAreaView,
 } from 'react-native';
 import Animated, {
-  FadeInUp,
-  ZoomIn,
-  useAnimatedStyle,
+  FadeInDown,
+  FadeInRight,
   useSharedValue,
-  withDelay,
+  useAnimatedStyle,
   withTiming,
-  withSpring,
-  SharedValue,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import { useAuthStore, apiService } from '@sisio/shared';
-import { Button, GlassCard } from '../components';
-import { useThemeColor } from '../hooks';
+import { useAuth } from '@sisio/shared';
+import { GlassCard } from '../components/GlassCard';
+import { GradientButton } from '../components/GradientButton';
+import { theme } from '../theme';
 
 const { width, height } = Dimensions.get('window');
 
-const slides = [
+const SLIDES = [
   {
-    id: 1,
+    id: '1',
     title: 'Sisio',
     subtitle: 'Conocimiento Ancestral',
-    description:
-      'La sabiduría de los pueblos Arhuaco, Kogui, Wiwa y Kankuamo sobre las aves de la Sierra Nevada',
-    gradient: ['rgba(45, 80, 22, 0.3)', 'rgba(74, 124, 47, 0.1)'],
+    description: 'Conexión ancestral con las aves de la Sierra Nevada',
+    communities: 'Arhuaco · Kogui · Wiwa · Kankuamo',
+    gradient: ['#0D1B0F', '#1A3A0F', '#2D5016'],
   },
   {
-    id: 2,
-    title: 'Identifica & Aprende',
+    id: '2',
+    title: 'Identifica y Aprende',
     subtitle: 'Cada ave tiene una historia',
     description:
-      'Captura una foto o graba el canto para descubrir la identidad y el significado ancestral',
-    gradient: ['rgba(212, 160, 23, 0.3)', 'rgba(245, 200, 66, 0.1)'],
+      'Captura una foto o graba el canto para descubrir la identidad y el significado ancestral de cada ave',
+    features: [
+      { icon: '📷', title: 'Identificación por Foto', description: 'Captura y reconoce especies al instante' },
+      { icon: '🎙️', title: 'Identificación por Sonido', description: 'Graba el canto del ave para identificarla' },
+      { icon: '🗺️', title: 'Mapa de Avistamientos', description: 'Explora avistamientos cerca de ti' },
+    ],
+    gradient: ['#1A3A0F', '#2D5016', '#4A7C2F'],
   },
   {
-    id: 3,
-    title: 'Preserva la Cultura',
-    subtitle: 'Sé parte de la memoria viva',
-    description:
-      'Contribuye a la preservación del conocimiento indígena mientras exploras la naturaleza',
-    gradient: ['rgba(46, 125, 154, 0.3)', 'rgba(100, 181, 246, 0.1)'],
+    id: '3',
+    title: 'Bienvenido',
+    subtitle: 'Elige cómo quieres explorar',
+    description: 'Únete a la comunidad o explora sin compromiso',
+    gradient: ['#0D1B0F', '#1A3A4A', '#2E7D9A'],
   },
 ];
 
 export const OnboardingScreen = ({ navigation }: any) => {
-  const { colors, isDark } = useThemeColor();
-  const scrollRef = useRef<ScrollView>(null);
-
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [showRegister, setShowRegister] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [guestName, setGuestName] = useState('');
+  const [showGuestForm, setShowGuestForm] = useState(false);
+  const { createGuestUser, loading } = useAuth();
 
   const scrollX = useSharedValue(0);
 
-  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const slide = Math.round(e.nativeEvent.contentOffset.x / width);
-    setCurrentSlide(slide);
-    scrollX.value = e.nativeEvent.contentOffset.x;
-  };
+  const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      setCurrentIndex(viewableItems[0].index || 0);
+    }
+  }, []);
 
-  const handleNext = () => {
-    if (currentSlide < slides.length - 1) {
-      scrollRef.current?.scrollTo({ x: (currentSlide + 1) * width, animated: true });
-    } else {
-      setShowRegister(true);
+  const viewabilityConfig = { viewAreaCoveragePercentThreshold: 50 };
+
+  const goToNext = () => {
+    if (currentIndex < SLIDES.length - 1) {
+      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
     }
   };
 
-  const handleSkip = () => {
-    setShowRegister(true);
+  const goToPrevious = () => {
+    if (currentIndex > 0) {
+      flatListRef.current?.scrollToIndex({ index: currentIndex - 1, animated: true });
+    }
   };
 
-  if (showRegister) {
-    return (
-      <ModeSelectionSlide
-        colors={colors}
-        isDark={isDark}
-        navigation={navigation}
-      />
-    );
-  }
-
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Skip Button */}
-      <Animated.View entering={FadeInUp.delay(200).springify()}>
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            top: 50,
-            right: 16,
-            zIndex: 10,
-            paddingVertical: 8,
-            paddingHorizontal: 14,
-          }}
-          onPress={handleSkip}
-        >
-          <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '500' }}>
-            Saltar
-          </Text>
-        </TouchableOpacity>
-      </Animated.View>
-
-      {/* Slides */}
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        style={{ flex: 1 }}
-      >
-        {slides.map((slide, index) => (
-          <OnboardingSlide
-            key={slide.id}
-            slide={slide}
-            index={index}
-            colors={colors}
-            isDark={isDark}
-            scrollX={scrollX}
-          />
-        ))}
-      </ScrollView>
-
-      {/* Footer */}
-      <Animated.View entering={FadeInUp.delay(400).springify()}>
-        <View style={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 16 }}>
-          {/* Pagination Dots */}
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-              marginBottom: 20,
-              gap: 6,
-            }}
-          >
-            {slides.map((_, idx) => (
-              <Animated.View
-                key={idx}
-                style={[
-                  {
-                    height: 6,
-                    borderRadius: 3,
-                    backgroundColor:
-                      idx === currentSlide
-                        ? colors.accent
-                        : colors.border,
-                  },
-                  {
-                    width: idx === currentSlide ? 24 : 8,
-                  },
-                ]}
-              />
-            ))}
-          </View>
-
-          {/* Next Button */}
-          <Button
-            title={currentSlide < slides.length - 1 ? 'Siguiente' : 'Comenzar'}
-            onPress={handleNext}
-            fullWidth
-          />
-        </View>
-      </Animated.View>
-    </View>
-  );
-};
-
-interface OnboardingSlidePropss {
-  slide: (typeof slides)[0];
-  index: number;
-  colors: any;
-  isDark: boolean;
-  scrollX: SharedValue<number>;
-}
-
-const OnboardingSlide: React.FC<OnboardingSlidePropss> = ({
-  slide,
-  index,
-  colors,
-  isDark,
-  scrollX,
-}) => {
-  const titleOpacity = useSharedValue(0);
-  const titleTranslate = useSharedValue(50);
-  const subtitleOpacity = useSharedValue(0);
-  const subtitleTranslate = useSharedValue(50);
-  const descriptionOpacity = useSharedValue(0);
-  const descriptionTranslate = useSharedValue(50);
-
-  useEffect(() => {
-    titleOpacity.value = withTiming(1, { duration: 600 });
-    titleTranslate.value = withSpring(0, { damping: 15 });
-
-    subtitleOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
-    subtitleTranslate.value = withDelay(200, withSpring(0, { damping: 15 }));
-
-    descriptionOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
-    descriptionTranslate.value = withDelay(400, withSpring(0, { damping: 15 }));
-  }, [index]);
-
-  const titleStyle = useAnimatedStyle(() => ({
-    opacity: titleOpacity.value,
-    transform: [{ translateY: titleTranslate.value }],
-  }));
-
-  const subtitleStyle = useAnimatedStyle(() => ({
-    opacity: subtitleOpacity.value,
-    transform: [{ translateY: subtitleTranslate.value }],
-  }));
-
-  const descriptionStyle = useAnimatedStyle(() => ({
-    opacity: descriptionOpacity.value,
-    transform: [{ translateY: descriptionTranslate.value }],
-  }));
-
-  return (
-    <View
-      style={{
-        width,
-        height,
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 24,
-      }}
-    >
-      <LinearGradient
-        colors={slide.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          opacity: 0.3,
-        }}
-      />
-
-      {/* Icon Animation */}
-      <Animated.View
-        entering={ZoomIn.delay(100).springify()}
-        style={{ marginBottom: 32 }}
-      >
-        <View
-          style={{
-            width: 100,
-            height: 100,
-            borderRadius: 50,
-            backgroundColor: `${slide.gradient[0]}50`,
-            borderWidth: 2,
-            borderColor: slide.gradient[0],
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <Feather
-            name={index === 0 ? 'feather' : index === 1 ? 'camera' : 'heart'}
-            size={48}
-            color={colors.foreground}
-          />
-        </View>
-      </Animated.View>
-
-      {/* Title */}
-      <Animated.Text
-        style={[
-          {
-            fontSize: 36,
-            fontWeight: '800',
-            color: colors.foreground,
-            textAlign: 'center',
-            marginBottom: 8,
-          },
-          titleStyle,
-        ]}
-      >
-        {slide.title}
-      </Animated.Text>
-
-      {/* Subtitle */}
-      <Animated.Text
-        style={[
-          {
-            fontSize: 16,
-            fontWeight: '600',
-            color: colors.accent,
-            textAlign: 'center',
-            marginBottom: 20,
-            letterSpacing: 0.5,
-          },
-          subtitleStyle,
-        ]}
-      >
-        {slide.subtitle}
-      </Animated.Text>
-
-      {/* Description */}
-      <Animated.Text
-        style={[
-          {
-            fontSize: 15,
-            color: colors.muted,
-            textAlign: 'center',
-            lineHeight: 24,
-            paddingHorizontal: 12,
-          },
-          descriptionStyle,
-        ]}
-      >
-        {slide.description}
-      </Animated.Text>
-    </View>
-  );
-};
-
-// Mode Selection Slide Component
-interface ModeSelectionSlideProps {
-  colors: any;
-  isDark: boolean;
-  navigation: any;
-}
-
-const ModeSelectionSlide: React.FC<ModeSelectionSlideProps> = ({
-  colors,
-  isDark,
-  navigation,
-}) => {
-  const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { guestLogin } = useAuthStore();
-
-  const handleContinueAsGuest = async () => {
-    if (!name.trim()) return;
-    setLoading(true);
+  const handleGuestContinue = async () => {
+    if (!guestName.trim()) return;
     try {
-      const response = await apiService.createGuestUser(name.trim());
-      const data = response.data;
-      guestLogin({
-        name: name.trim(),
-        guest_id: data.guest_id,
-      });
+      await createGuestUser(guestName.trim());
       navigation.replace('Main');
     } catch (error) {
       console.error('Error:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
-        <ScrollView
-          contentContainerStyle={{
-            flex: 1,
-            justifyContent: 'center',
-            paddingHorizontal: 24,
-          }}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Welcome Section */}
-          <Animated.View entering={FadeInUp.delay(100).springify()}>
-            <View style={{ alignItems: 'center', marginBottom: 40 }}>
-              <Animated.View
-                entering={ZoomIn.delay(200).springify()}
-                style={{ marginBottom: 16 }}
-              >
-                <View
-                  style={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: 40,
-                    backgroundColor: `${colors.accent}20`,
-                    borderWidth: 2,
-                    borderColor: colors.accent,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Feather name="feather" size={40} color={colors.accent} />
-                </View>
-              </Animated.View>
+  const renderSlide1 = ({ item }: any) => (
+    <View style={[styles.slideContainer, { width }]}>
+      <LinearGradient
+        colors={item.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.slideBackground}
+      />
+      <View style={styles.slideContent}>
+        <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.slide1BirdContainer}>
+          <Text style={styles.slide1BirdEmoji}>🦅</Text>
+        </Animated.View>
 
-              <Text
-                style={{
-                  fontSize: 28,
-                  fontWeight: '800',
-                  color: colors.foreground,
-                  textAlign: 'center',
-                }}
-              >
-                Bienvenido a{' '}
-                <Text style={{ color: colors.accent }}>Sisio</Text>
-              </Text>
+        <Animated.View entering={FadeInDown.delay(400).springify()}>
+          <Text style={styles.slide1Title}>{item.title}</Text>
+        </Animated.View>
 
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: colors.muted,
-                  textAlign: 'center',
-                  marginTop: 12,
-                  lineHeight: 20,
-                }}
-              >
-                El conocimiento ancestral sobre las aves te espera
-              </Text>
+        <Animated.View entering={FadeInDown.delay(600).springify()}>
+          <Text style={styles.slide1Subtitle}>{item.subtitle}</Text>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(800).springify()}>
+          <Text style={styles.slide1Description}>{item.description}</Text>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(1000).springify()} style={styles.slide1Communities}>
+          <Text style={styles.slide1CommunitiesText}>{item.communities}</Text>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(1200).springify()}>
+          <GradientButton
+            title="Comenzar"
+            onPress={goToNext}
+            gradientColors={['#D4A017', '#F5C842']}
+            textColor="#0D1B0F"
+          />
+        </Animated.View>
+      </View>
+    </View>
+  );
+
+  const renderSlide2 = ({ item }: any) => (
+    <View style={[styles.slideContainer, { width }]}>
+      <LinearGradient
+        colors={item.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.slideBackground}
+      />
+      <View style={styles.slideContent}>
+        <Animated.View entering={FadeInDown.delay(200).springify()}>
+          <Text style={styles.slide2Title}>{item.title}</Text>
+          <Text style={styles.slide2Subtitle}>{item.subtitle}</Text>
+        </Animated.View>
+
+        {item.features.map((feature: any, index: number) => (
+          <Animated.View
+            key={index}
+            entering={FadeInDown.delay(400 + index * 150).springify()}
+            style={styles.featureRow}
+          >
+            <View style={styles.featureIconContainer}>
+              <Text style={styles.featureIcon}>{feature.icon}</Text>
+            </View>
+            <View style={styles.featureTextContainer}>
+              <Text style={styles.featureTitle}>{feature.title}</Text>
+              <Text style={styles.featureDescription}>{feature.description}</Text>
             </View>
           </Animated.View>
+        ))}
+      </View>
+    </View>
+  );
 
-          {/* Form Section */}
-          <Animated.View entering={FadeInUp.delay(250).springify()}>
+  const renderSlide3 = ({ item }: any) => (
+    <View style={[styles.slideContainer, { width }]}>
+      <LinearGradient
+        colors={item.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.slideBackground}
+      />
+      <View style={styles.slideContent}>
+        <Animated.View entering={FadeInDown.delay(200).springify()}>
+          <Text style={styles.slide3Title}>{item.title}</Text>
+          <Text style={styles.slide3Subtitle}>{item.description}</Text>
+        </Animated.View>
+
+        {showGuestForm ? (
+          <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.guestFormContainer}>
             <GlassCard
               intensity={60}
               borderRadius={20}
-              gradientColors={[
-                `${colors.primaryLight}10`,
-                `${colors.primaryLight}05`,
-              ]}
+              gradientColors={['rgba(45, 80, 22, 0.1)', 'rgba(74, 124, 47, 0.05)']}
             >
-              <View style={{ paddingVertical: 24, paddingHorizontal: 16 }}>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: '600',
-                    color: colors.muted,
-                    marginBottom: 8,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.5,
-                  }}
-                >
-                  ¿Cómo te llamas?
-                </Text>
-
+              <View style={styles.guestFormContent}>
+                <Text style={styles.guestFormLabel}>¿Cómo te llamas?</Text>
                 <TextInput
-                  style={{
-                    backgroundColor: `${colors.card}`,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: 12,
-                    paddingHorizontal: 16,
-                    paddingVertical: 14,
-                    fontSize: 15,
-                    color: colors.foreground,
-                    marginBottom: 16,
-                  }}
+                  style={styles.guestInput}
                   placeholder="Tu nombre"
-                  placeholderTextColor={colors.muted}
-                  value={name}
-                  onChangeText={setName}
-                  editable={!loading}
+                  placeholderTextColor="rgba(240, 247, 238, 0.3)"
+                  value={guestName}
+                  onChangeText={setGuestName}
                   autoCapitalize="words"
                 />
-
-                <Button
+                <GradientButton
                   title={loading ? 'Entrando...' : 'Explorar como Invitado'}
-                  onPress={handleContinueAsGuest}
-                  disabled={!name.trim() || loading}
-                  loading={loading}
-                  fullWidth
+                  onPress={handleGuestContinue}
+                  disabled={!guestName.trim() || loading}
+                  gradientColors={['#2D5016', '#4A7C2F']}
+                  textColor="#F0F7EE"
                 />
-
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    marginVertical: 20,
-                    gap: 12,
-                  }}
-                >
-                  <View
-                    style={{
-                      flex: 1,
-                      height: 1,
-                      backgroundColor: colors.border,
-                    }}
-                  />
-                  <Text style={{ color: colors.muted, fontSize: 12 }}>O</Text>
-                  <View
-                    style={{
-                      flex: 1,
-                      height: 1,
-                      backgroundColor: colors.border,
-                    }}
-                  />
-                </View>
-
-                <Button
-                  title="Crear Cuenta"
-                  variant="secondary"
-                  onPress={() => navigation.navigate('Register')}
-                  fullWidth
-                  style={{ marginBottom: 12 }}
-                />
-
                 <TouchableOpacity
-                  style={{ paddingVertical: 8 }}
-                  onPress={() => navigation.navigate('Login')}
+                  onPress={() => setShowGuestForm(false)}
+                  style={styles.backButton}
                 >
-                  <Text
-                    style={{
-                      color: colors.accent,
-                      fontSize: 14,
-                      fontWeight: '600',
-                      textAlign: 'center',
-                    }}
-                  >
-                    Ya tengo cuenta
-                  </Text>
+                  <Text style={styles.backButtonText}>Volver</Text>
                 </TouchableOpacity>
               </View>
             </GlassCard>
           </Animated.View>
-
-          {/* Footer Text */}
-          <Animated.View
-            entering={FadeInUp.delay(400).springify()}
-            style={{ marginTop: 32 }}
-          >
-            <Text
-              style={{
-                fontSize: 12,
-                color: colors.muted,
-                textAlign: 'center',
-                lineHeight: 18,
-              }}
-            >
-              Proteges tu privacidad con nosotros.{'\n'}
-              Lee nuestros términos de servicio
+        ) : (
+          <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.slide3Buttons}>
+            <GradientButton
+              title="Entrar como Usuario"
+              onPress={() => navigation.navigate('Login')}
+              gradientColors={['#D4A017', '#F5C842']}
+              textColor="#0D1B0F"
+              style={{ marginBottom: 16 }}
+            />
+            <GradientButton
+              title="Explorar como Invitado"
+              onPress={() => setShowGuestForm(true)}
+              gradientColors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+              textColor="#F0F7EE"
+            />
+            <Text style={styles.slide3Communities}>
+              Arhuaco · Kogui · Wiwa · Kankuamo
             </Text>
           </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderItem = ({ item, index }: any) => {
+    switch (index) {
+      case 0:
+        return renderSlide1({ item });
+      case 1:
+        return renderSlide2({ item });
+      case 2:
+        return renderSlide3({ item });
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <FlatList
+          ref={flatListRef}
+          data={SLIDES}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          bounces={false}
+        />
+
+        {currentIndex > 0 && (
+          <TouchableOpacity
+            style={[styles.navArrow, styles.navArrowLeft]}
+            onPress={goToPrevious}
+            activeOpacity={0.7}
+          >
+            <Feather name="chevron-left" size={24} color="#F0F7EE" />
+          </TouchableOpacity>
+        )}
+
+        {currentIndex < SLIDES.length - 1 && (
+          <TouchableOpacity
+            style={[styles.navArrow, styles.navArrowRight]}
+            onPress={goToNext}
+            activeOpacity={0.7}
+          >
+            <Feather name="chevron-right" size={24} color="#F0F7EE" />
+          </TouchableOpacity>
+        )}
+
+        <View style={styles.dotsContainer}>
+          {SLIDES.map((_, index) => {
+            const dotStyle = useAnimatedStyle(() => ({
+              width: index === currentIndex ? 28 : 8,
+              opacity: index === currentIndex ? 1 : 0.4,
+            }));
+
+            return (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.dot,
+                  dotStyle,
+                  { backgroundColor: index === currentIndex ? '#D4A017' : 'rgba(240, 247, 238, 0.3)' },
+                ]}
+              />
+            );
+          })}
+        </View>
+
+        {currentIndex < SLIDES.length - 1 && (
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => flatListRef.current?.scrollToIndex({ index: SLIDES.length - 1, animated: true })}
+          >
+            <Text style={styles.skipButtonText}>Saltar</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#0D1B0F',
+  },
+  container: {
+    flex: 1,
+  },
+  slideContainer: {
+    flex: 1,
+  },
+  slideBackground: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  slideContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+
+  slide1BirdContainer: {
+    marginBottom: 24,
+  },
+  slide1BirdEmoji: {
+    fontSize: 64,
+  },
+  slide1Title: {
+    fontSize: 56,
+    fontWeight: '900',
+    color: '#F0F7EE',
+    fontFamily: theme.fonts.display,
+    letterSpacing: 4,
+    marginBottom: 12,
+  },
+  slide1Subtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#D4A017',
+    fontFamily: theme.fonts.native,
+    letterSpacing: 2,
+    marginBottom: 8,
+  },
+  slide1Description: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: 'rgba(240, 247, 238, 0.6)',
+    fontFamily: theme.fonts.body,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  slide1Communities: {
+    marginTop: 8,
+    marginBottom: 40,
+  },
+  slide1CommunitiesText: {
+    fontSize: 12,
+    fontWeight: '300',
+    color: 'rgba(212, 160, 23, 0.5)',
+    letterSpacing: 1.5,
+  },
+
+  slide2Title: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#F0F7EE',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  slide2Subtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(240, 247, 238, 0.6)',
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 24,
+    gap: 16,
+  },
+  featureIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: 'rgba(212, 160, 23, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  featureIcon: {
+    fontSize: 24,
+  },
+  featureTextContainer: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F0F7EE',
+    marginBottom: 4,
+  },
+  featureDescription: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: 'rgba(240, 247, 238, 0.5)',
+    lineHeight: 18,
+  },
+
+  slide3Title: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#F0F7EE',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  slide3Subtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: 'rgba(240, 247, 238, 0.6)',
+    textAlign: 'center',
+    marginBottom: 40,
+    lineHeight: 22,
+  },
+  slide3Buttons: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  slide3Communities: {
+    marginTop: 32,
+    fontSize: 11,
+    fontWeight: '300',
+    color: 'rgba(212, 160, 23, 0.4)',
+    letterSpacing: 1.5,
+  },
+  guestFormContainer: {
+    width: '100%',
+  },
+  guestFormContent: {
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+  },
+  guestFormLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(240, 247, 238, 0.5)',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  guestInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#F0F7EE',
+    marginBottom: 20,
+  },
+  backButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  backButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(240, 247, 238, 0.5)',
+  },
+
+  navArrow: {
+    position: 'absolute',
+    top: '50%',
+    transform: [{ translateY: -20 }],
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  navArrowLeft: {
+    left: 16,
+  },
+  navArrowRight: {
+    right: 16,
+  },
+
+  dotsContainer: {
+    position: 'absolute',
+    bottom: 40,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dot: {
+    height: 8,
+    borderRadius: 4,
+  },
+
+  skipButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  skipButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(240, 247, 238, 0.5)',
+  },
+});

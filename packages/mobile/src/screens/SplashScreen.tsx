@@ -1,168 +1,122 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
-  FadeIn,
-  FadeInDown,
-  FadeInUp,
   useSharedValue,
   useAnimatedStyle,
-  withDelay,
   withTiming,
+  withDelay,
   withRepeat,
+  Easing,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather } from '@expo/vector-icons';
-import { useAuthStore } from '@sisio/shared';
-import { useThemeColor } from '../hooks';
+import { useAuthStore, colors } from '@sisio/shared';
+
+const { width, height } = Dimensions.get('window');
+
+const LOGO_LETTERS = ['S', 'I', 'S', 'I', 'O'];
+const BIRD_START_X = width + 50;
+const BIRD_END_X = -100;
 
 export const SplashScreen = ({ navigation }: any) => {
-  const { colors } = useThemeColor();
-  const birdScale = useSharedValue(0);
-  const logoOpacity = useSharedValue(0);
-  const dotScale = useSharedValue(0);
+  const { isGuest, isAuthenticated } = useAuthStore();
+
+  const birdTranslateX = useSharedValue(BIRD_START_X);
+  const birdOpacity = useSharedValue(0);
+  const birdScale = useSharedValue(0.6);
+
+  const letterOpacities = LOGO_LETTERS.map(() => useSharedValue(0));
+  const subtitleOpacity = useSharedValue(0);
 
   useEffect(() => {
-    // Bird animation (flies in from right)
-    birdScale.value = withTiming(1, { duration: 1200 });
+    birdTranslateX.value = withTiming(BIRD_END_X, {
+      duration: 2000,
+      easing: Easing.inOut(Easing.quad),
+    });
+    birdOpacity.value = withTiming(1, { duration: 300 }, () => {
+      birdOpacity.value = withTiming(0, { duration: 500 }, () => {});
+    });
+    birdScale.value = withTiming(1, { duration: 1000 });
 
-    // Logo fades in and scales
-    logoOpacity.value = withDelay(400, withTiming(1, { duration: 1200 }));
+    LOGO_LETTERS.forEach((_, index) => {
+      letterOpacities[index].value = withDelay(
+        400 + index * 200,
+        withTiming(1, { duration: 400 })
+      );
+    });
 
-    // Loading dots pulse
-    dotScale.value = withRepeat(
-      withTiming(1.2, { duration: 1000 }),
-      -1,
-      true
+    subtitleOpacity.value = withDelay(
+      400 + LOGO_LETTERS.length * 200 + 200,
+      withTiming(1, { duration: 600 })
     );
 
-    // Navigate after 3 seconds
     const timer = setTimeout(() => {
-      const { isGuest, isAuthenticated } = useAuthStore.getState();
       if (isGuest || isAuthenticated) {
         navigation.replace('Main');
       } else {
         navigation.replace('Onboarding');
       }
-    }, 3200);
+    }, 3000);
 
     return () => clearTimeout(timer);
-  }, [navigation, birdScale, logoOpacity, dotScale]);
+  }, [navigation, isGuest, isAuthenticated]);
 
   const birdStyle = useAnimatedStyle(() => ({
-    opacity: birdScale.value,
-    transform: [{ scale: birdScale.value }],
-  }));
-
-  const logoStyle = useAnimatedStyle(() => ({
-    opacity: logoOpacity.value,
-  }));
-
-  const dotStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: dotScale.value }],
-  }));
+    transform: [
+      { translateX: birdTranslateX.value },
+      { scale: birdScale.value },
+    ],
+    opacity: birdOpacity.value,
+  } as any));
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={styles.container}>
       <LinearGradient
-        colors={[
-          `${colors.primaryLight}15`,
-          `${colors.secondary}08`,
-        ]}
+        colors={['#0D1B0F', '#1A3A0F', '#0D1B0F']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Main Content */}
-      <View style={styles.content}>
-        {/* Bird Icon Animation */}
-        <Animated.View style={[styles.birdContainer, birdStyle]}>
-          <View
-            style={[
-              styles.birdCircle,
-              { borderColor: colors.primaryLight },
-            ]}
-          >
-            <Feather
-              name="feather"
-              size={56}
-              color={colors.primaryLight}
-            />
-          </View>
-        </Animated.View>
+      <LinearGradient
+        colors={['rgba(45, 80, 22, 0.15)', 'rgba(139, 195, 74, 0.05)', 'rgba(45, 80, 22, 0.15)']}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.forestOverlay}
+      />
 
-        {/* Logo */}
-        <Animated.Text
-          style={[
-            styles.logo,
-            { color: colors.secondary },
-            logoStyle,
-          ]}
-        >
-          SISIO
-        </Animated.Text>
-
-        {/* Subtitle */}
-        <Animated.Text
-          entering={FadeInDown.delay(800).springify()}
-          style={[
-            styles.subtitle,
-            { color: colors.foreground },
-          ]}
-        >
-          Conocimiento Ancestral
-        </Animated.Text>
-
-        {/* Divider */}
-        <Animated.View
-          entering={FadeIn.delay(1000).springify()}
-          style={[
-            styles.divider,
-            { backgroundColor: colors.accent },
-          ]}
-        />
-
-        {/* Tagline */}
-        <Animated.Text
-          entering={FadeInUp.delay(1200).springify()}
-          style={[
-            styles.tagline,
-            { color: colors.muted },
-          ]}
-        >
-          Preservando la sabiduría{'\n'}de la Sierra Nevada
-        </Animated.Text>
-      </View>
-
-      {/* Loading Dots */}
-      <Animated.View
-        entering={FadeInUp.delay(1400).springify()}
-        style={styles.loadingContainer}
-      >
-        <View style={styles.dotsRow}>
-          {[0, 1, 2].map((i) => (
-            <Animated.View
-              key={i}
-              style={[
-                styles.dot,
-                { backgroundColor: colors.accent },
-                dotStyle,
-              ]}
-            />
-          ))}
-        </View>
-        <Text style={[styles.loadingText, { color: colors.muted }]}>
-          Inicializando...
-        </Text>
+      <Animated.View style={[styles.birdContainer, birdStyle]}>
+        <Text style={styles.birdEmoji}>🦅</Text>
       </Animated.View>
 
-      {/* Footer */}
-      <Animated.Text
-        entering={FadeInUp.delay(1600).springify()}
-        style={[styles.footer, { color: colors.muted }]}
-      >
-        Sierra Nevada de Santa Marta
-      </Animated.Text>
+      <View style={styles.logoContainer}>
+        <View style={styles.logoRow}>
+          {LOGO_LETTERS.map((letter, index) => {
+            const letterStyle = useAnimatedStyle(() => ({
+              opacity: letterOpacities[index].value,
+              transform: [{ translateY: (1 - letterOpacities[index].value) * 20 }],
+            }));
+
+            return (
+              <Animated.Text
+                key={index}
+                style={[styles.logoLetter, letterStyle]}
+              >
+                {letter}
+              </Animated.Text>
+            );
+          })}
+        </View>
+
+        <Animated.View style={[styles.subtitleContainer, { opacity: subtitleOpacity }]}>
+          <Text style={styles.subtitle}>Aves de la Sierra Nevada</Text>
+        </Animated.View>
+      </View>
+
+      <Animated.View style={[styles.footerContainer, { opacity: subtitleOpacity }]}>
+        <View style={styles.divider} />
+        <Text style={styles.footerText}>Sierra Nevada de Santa Marta</Text>
+        <Text style={styles.footerSubtext}>Conocimiento Ancestral</Text>
+      </Animated.View>
     </View>
   );
 };
@@ -170,73 +124,71 @@ export const SplashScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0D1B0F',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
   },
-  content: {
-    alignItems: 'center',
-    marginBottom: 60,
+  forestOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.8,
   },
   birdContainer: {
-    marginBottom: 28,
+    position: 'absolute',
+    top: height * 0.3,
   },
-  birdCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 2,
-    justifyContent: 'center',
+  birdEmoji: {
+    fontSize: 48,
+  },
+  logoContainer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(139, 195, 74, 0.08)',
+    marginBottom: 40,
   },
-  logo: {
-    fontSize: 56,
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  logoLetter: {
+    fontSize: 64,
     fontWeight: '900',
-    letterSpacing: 12,
-    marginBottom: 12,
+    color: '#F0F7EE',
+    letterSpacing: 8,
+  },
+  subtitleContainer: {
+    marginTop: 16,
+    alignItems: 'center',
   },
   subtitle: {
     fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 1.5,
-    marginBottom: 20,
+    fontWeight: '500',
+    color: '#D4A017',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+  },
+  footerContainer: {
+    position: 'absolute',
+    bottom: 60,
+    alignItems: 'center',
   },
   divider: {
-    width: 60,
+    width: 40,
     height: 2,
-    marginVertical: 20,
+    backgroundColor: 'rgba(212, 160, 23, 0.4)',
+    marginBottom: 16,
     borderRadius: 1,
   },
-  tagline: {
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 20,
-    fontStyle: 'italic',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 40,
-  },
-  dotsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  loadingText: {
-    fontSize: 12,
-    letterSpacing: 0.5,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 40,
+  footerText: {
     fontSize: 11,
-    letterSpacing: 1,
+    fontWeight: '400',
+    color: 'rgba(240, 247, 238, 0.4)',
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
+  },
+  footerSubtext: {
+    fontSize: 10,
+    fontWeight: '300',
+    color: 'rgba(212, 160, 23, 0.3)',
+    letterSpacing: 1,
+    marginTop: 4,
   },
 });

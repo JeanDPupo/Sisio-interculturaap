@@ -1,1 +1,1 @@
-{"version":3,"file":"useBird.d.ts","sourceRoot":"","sources":["../../src/hooks/useBird.ts"],"names":[],"mappings":"AAIA,OAAO,EAAE,IAAI,EAAE,wBAAwB,EAAE,MAAM,UAAU,CAAC;AAE1D,eAAO,MAAM,OAAO;;;;;;;;;;;CA6HnB,CAAC"}
+{"version":3,"file":"useBird.d.ts","sourceRoot":"","sources":["../../src/hooks/useBird.ts"],"names":[],"mappings":"AAKA,OAAO,KAAK,EAAE,IAAI,EAAE,wBAAwB,EAAE,MAAM,UAAU,CAAC;AAE/D,eAAO,MAAM,OAAO;;;;;;uBAgBF,MAAM,WAAe,MAAM;sBAkB9B,MAAM;yBAkBH,MAAM;8BA8BP,IAAI,aAAa,MAAM,cAAc,MAAM;8BAkC3C,IAAI,aAAa,MAAM,cAAc,MAAM;CAiC3D,CAAC"}

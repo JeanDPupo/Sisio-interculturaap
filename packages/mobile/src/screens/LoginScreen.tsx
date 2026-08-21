@@ -7,18 +7,27 @@ import {
   TouchableOpacity,
   SafeAreaView,
   KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useAuth } from '@sisio/shared';
-import { Button, GlassCard } from '../components';
+import { GlassCard, GradientButton } from '../components';
 import { useThemeColor } from '../hooks';
+import { palette } from '../theme';
+
+const forestGradient: [string, string, string, ...string[]] = [
+  palette.verdeSelva,
+  palette.azulNoche,
+  palette.negroSelva,
+];
 
 export const LoginScreen = ({ navigation }: any) => {
   const { colors } = useThemeColor();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login, error, setError } = useAuth();
 
@@ -40,184 +49,173 @@ export const LoginScreen = ({ navigation }: any) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      behavior="padding"
-    >
-      <LinearGradient
-        colors={[`${colors.secondary}14`, `${colors.primaryLight}08`, 'transparent']}
-        style={StyleSheet.absoluteFill}
-      />
-      <SafeAreaView style={styles.content}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Feather name="chevron-left" size={26} color={colors.foreground} />
-        </TouchableOpacity>
+    <LinearGradient colors={forestGradient} style={styles.gradient}>
+      <KeyboardAvoidingView
+        style={styles.keyboard}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.content}>
+            <Animated.View entering={ZoomIn.delay(100).springify()} style={styles.logoSection}>
+              <Text style={styles.logoEmoji}>🦜</Text>
+              <Text style={styles.logoText}>Sisio</Text>
+            </Animated.View>
 
-        <View style={styles.formContainer}>
-          <Animated.View entering={ZoomIn.delay(80).springify()} style={styles.logoWrap}>
-            <View style={[styles.logoCircle, { borderColor: colors.accent }]}>
-              <Feather name="feather" size={42} color={colors.accent} />
-            </View>
-          </Animated.View>
-
-          <Animated.Text
-            entering={FadeInDown.delay(120).springify()}
-            style={[styles.title, { color: colors.foreground }]}
-          >
-            Iniciar Sesion
-          </Animated.Text>
-          <Animated.Text
-            entering={FadeInDown.delay(180).springify()}
-            style={[styles.subtitle, { color: colors.muted }]}
-          >
-            Vuelve a tu cuaderno de avistamientos
-          </Animated.Text>
-
-          <Animated.View entering={FadeInUp.delay(240).springify()}>
-            <GlassCard
-              intensity={65}
-              borderRadius={20}
-              gradientColors={[`${colors.primaryLight}10`, `${colors.secondary}08`]}
+            <Animated.Text
+              entering={FadeInDown.delay(200).springify()}
+              style={styles.title}
             >
-              <View style={styles.form}>
-                <AuthField
-                  label="Email"
-                  icon="mail"
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="tu@email.com"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  editable={!loading}
-                  colors={colors}
-                />
-                <AuthField
-                  label="Contrasena"
-                  icon="lock"
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Tu contrasena"
-                  secureTextEntry
-                  editable={!loading}
-                  colors={colors}
-                />
+              Iniciar Sesión
+            </Animated.Text>
+            <Animated.Text
+              entering={FadeInDown.delay(280).springify()}
+              style={styles.subtitle}
+            >
+              Vuelve a tu cuaderno de avistamientos
+            </Animated.Text>
 
-                {error && (
-                  <View
-                    style={[
-                      styles.errorBox,
-                      {
-                        borderColor: `${colors.danger}55`,
-                        backgroundColor: `${colors.danger}12`,
-                      },
-                    ]}
-                  >
-                    <Feather name="alert-circle" size={16} color={colors.danger} />
-                    <Text style={[styles.errorText, { color: colors.danger }]}>
-                      {error}
-                    </Text>
+            <Animated.View entering={FadeInUp.delay(360).springify()}>
+              <GlassCard
+                intensity={65}
+                borderRadius={20}
+                gradientColors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.02)']}
+              >
+                <View style={styles.form}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Email</Text>
+                    <View style={[styles.inputShell, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                      <Feather name="mail" size={18} color={colors.muted} />
+                      <TextInput
+                        style={[styles.input, { color: colors.foreground }]}
+                        placeholder="tu@email.com"
+                        placeholderTextColor={colors.muted}
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        editable={!loading}
+                      />
+                    </View>
                   </View>
-                )}
 
-                <Button
-                  title={loading ? 'Entrando...' : 'Entrar'}
-                  onPress={handleLogin}
-                  loading={loading}
-                  disabled={loading}
-                  fullWidth
-                  size="lg"
-                />
-              </View>
-            </GlassCard>
-          </Animated.View>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Contraseña</Text>
+                    <View style={[styles.inputShell, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                      <Feather name="lock" size={18} color={colors.muted} />
+                      <TextInput
+                        style={[styles.input, { color: colors.foreground }]}
+                        placeholder="Tu contraseña"
+                        placeholderTextColor={colors.muted}
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry={!showPassword}
+                        editable={!loading}
+                      />
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                        <Feather
+                          name={showPassword ? 'eye-off' : 'eye'}
+                          size={18}
+                          color={colors.muted}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
 
-          <Animated.View entering={FadeInUp.delay(340).springify()} style={styles.footer}>
-            <Text style={[styles.footerText, { color: colors.muted }]}>
-              No tienes cuenta?
-            </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={[styles.footerLink, { color: colors.accent }]}>
-                Crear cuenta
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+                  {error && (
+                    <View
+                      style={[
+                        styles.errorBox,
+                        {
+                          borderColor: `${colors.danger}55`,
+                          backgroundColor: `${colors.danger}12`,
+                        },
+                      ]}
+                    >
+                      <Feather name="alert-circle" size={16} color={colors.danger} />
+                      <Text style={[styles.errorText, { color: colors.danger }]}>
+                        {error}
+                      </Text>
+                    </View>
+                  )}
+
+                  <GradientButton
+                    title={loading ? 'Entrando...' : 'Iniciar Sesión'}
+                    onPress={handleLogin}
+                    variant="gold"
+                    size="lg"
+                    fullWidth
+                    loading={loading}
+                    disabled={loading}
+                  />
+                </View>
+              </GlassCard>
+            </Animated.View>
+
+            <Animated.View entering={FadeInUp.delay(460).springify()} style={styles.footer}>
+              <Text style={styles.footerText}>¿No tienes cuenta? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <Text style={styles.footerLink}>Crear una</Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <Animated.View entering={FadeInUp.delay(540).springify()} style={styles.guestSection}>
+              <GradientButton
+                title="Entrar como Invitado"
+                onPress={() => navigation.replace('Main')}
+                variant="outline"
+                size="md"
+                fullWidth
+                icon={<Feather name="user" size={16} color={colors.foreground} />}
+              />
+            </Animated.View>
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 };
 
-const AuthField = ({
-  label,
-  icon,
-  colors,
-  ...props
-}: any) => (
-  <View style={styles.inputGroup}>
-    <Text style={[styles.label, { color: colors.foreground }]}>{label}</Text>
-    <View
-      style={[
-        styles.inputShell,
-        {
-          borderColor: colors.border,
-          backgroundColor: colors.card,
-        },
-      ]}
-    >
-      <Feather name={icon} size={18} color={colors.muted} />
-      <TextInput
-        style={[styles.input, { color: colors.foreground }]}
-        placeholderTextColor={colors.muted}
-        {...props}
-      />
-    </View>
-  </View>
-);
-
 const styles = StyleSheet.create({
-  container: {
+  gradient: {
+    flex: 1,
+  },
+  keyboard: {
+    flex: 1,
+  },
+  safeArea: {
     flex: 1,
   },
   content: {
-    flex: 1,
-  },
-  backButton: {
-    width: 48,
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-    marginTop: 4,
-  },
-  formContainer: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
     paddingBottom: 36,
   },
-  logoWrap: {
+  logoSection: {
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 8,
   },
-  logoCircle: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(212, 160, 23, 0.08)',
+  logoEmoji: {
+    fontSize: 52,
+    marginBottom: 4,
+  },
+  logoText: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#F0F7EE',
+    letterSpacing: -1,
   },
   title: {
-    fontSize: 30,
-    fontWeight: '900',
+    fontSize: 28,
+    fontFamily: 'PlayfairDisplay_700Bold',
     textAlign: 'center',
+    color: '#F0F7EE',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    lineHeight: 20,
     textAlign: 'center',
+    color: '#8B9D8B',
     marginBottom: 28,
   },
   form: {
@@ -230,6 +228,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '700',
+    color: '#F0F7EE',
   },
   inputShell: {
     minHeight: 52,
@@ -264,14 +263,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
     marginTop: 22,
   },
   footerText: {
     fontSize: 14,
+    color: '#8B9D8B',
   },
   footerLink: {
     fontSize: 14,
     fontWeight: '800',
+    color: palette.oroIndigena,
+  },
+  guestSection: {
+    marginTop: 16,
   },
 });

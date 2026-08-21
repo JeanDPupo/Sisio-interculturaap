@@ -48,7 +48,7 @@ export const useSightings = () => {
         setLoading(false);
       }
     },
-    [setLoading, setError, setCurrentSighting]
+    [setLoading, setError]
   );
 
   const getSightingsForMap = useCallback(
@@ -101,7 +101,7 @@ export const useSightings = () => {
         setLoading(false);
       }
     },
-    [setLoading, setError, updateSightingInStore]
+    [setLoading, setError]
   );
 
   const deleteSighting = useCallback(

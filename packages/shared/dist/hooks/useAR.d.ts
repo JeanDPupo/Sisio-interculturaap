@@ -7,15 +7,15 @@ export interface ARSceneConfig {
     onHotspotClick?: (info: string) => void;
 }
 export declare const useAR: () => {
-    isARSupported: any;
-    isLoading: any;
-    error: any;
-    initializeARScene: any;
-    rotateModel: any;
-    zoomModel: any;
-    resetModel: any;
-    toggleWireframe: any;
-    takeSnapshot: any;
-    dispose: any;
+    isARSupported: boolean;
+    isLoading: boolean;
+    error: string | null;
+    initializeARScene: (config: ARSceneConfig) => Promise<void>;
+    rotateModel: (angle: number) => void;
+    zoomModel: (factor: number) => void;
+    resetModel: () => void;
+    toggleWireframe: () => void;
+    takeSnapshot: () => Promise<Blob | null>;
+    dispose: () => void;
 };
 //# sourceMappingURL=useAR.d.ts.map

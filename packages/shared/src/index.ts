@@ -20,3 +20,6 @@ export * from './config';
 
 // Theme
 export * from './theme';
+
+// Babylon
+export * from './babylon';

@@ -7,21 +7,29 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useAuth, useSightings } from '@sisio/shared';
-import { Button, GlassCard, Header } from '../components';
+import { GlassCard } from '../components';
 import { useThemeColor } from '../hooks';
+import { palette } from '../theme';
 
 const filters = ['Todos', 'Foto', 'Audio'];
+
+const riskColorMap: Record<string, string> = {
+  bajo: palette.riesgoBajo,
+  medio: palette.riesgoMedio,
+  alto: palette.riesgoAlto,
+};
 
 export const SightingsScreen = ({ navigation }: any) => {
   const { colors } = useThemeColor();
   const { user } = useAuth();
   const { sightings, loading, getSightings } = useSightings();
-  const [groupedSightings, setGroupedSightings] = useState<any>({});
+  const [groupedSightings, setGroupedSightings] = useState<Record<string, any[]>>({});
   const [activeFilter, setActiveFilter] = useState('Todos');
 
   useEffect(() => {
@@ -29,7 +37,7 @@ export const SightingsScreen = ({ navigation }: any) => {
   }, [user?.id]);
 
   useEffect(() => {
-    const grouped: any = {};
+    const grouped: Record<string, any[]> = {};
     sightings
       .filter((sighting: any) => {
         if (activeFilter === 'Todos') return true;
@@ -37,20 +45,22 @@ export const SightingsScreen = ({ navigation }: any) => {
         return source === activeFilter;
       })
       .forEach((sighting: any) => {
-      const date = new Date(sighting.created_at).toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+        const date = new Date(sighting.created_at).toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push(sighting);
       });
-      if (!grouped[date]) grouped[date] = [];
-      grouped[date].push(sighting);
-    });
     setGroupedSightings(grouped);
   }, [sightings, activeFilter]);
 
   const renderSightingCard = (sighting: any, index: number) => {
     const confidence = Math.round((sighting.confidence || 0) * 100);
     const source = sighting.audio_url || sighting.audio ? 'Audio' : 'Foto';
+    const risk = sighting.ecosistema_riesgo || 'bajo';
+    const riskColor = riskColorMap[risk] || palette.riesgoBajo;
 
     return (
       <Animated.View key={sighting.id} entering={FadeInUp.delay(index * 50).springify()}>
@@ -84,10 +94,18 @@ export const SightingsScreen = ({ navigation }: any) => {
                   </View>
                 </View>
               </View>
-              <View style={[styles.confidenceBadge, { backgroundColor: `${colors.primaryLight}18` }]}>
-                <Text style={[styles.confidenceText, { color: colors.primaryLight }]}>
-                  {confidence}%
-                </Text>
+              <View style={styles.chipsColumn}>
+                <View style={[styles.confidenceBadge, { backgroundColor: `${colors.primaryLight}18` }]}>
+                  <Text style={[styles.confidenceText, { color: colors.primaryLight }]}>
+                    {confidence}%
+                  </Text>
+                </View>
+                <View style={[styles.riskBadge, { backgroundColor: `${riskColor}20` }]}>
+                  <View style={[styles.riskDot, { backgroundColor: riskColor }]} />
+                  <Text style={[styles.riskText, { color: riskColor }]}>
+                    {risk.charAt(0).toUpperCase() + risk.slice(1)}
+                  </Text>
+                </View>
               </View>
             </View>
           </GlassCard>
@@ -98,16 +116,14 @@ export const SightingsScreen = ({ navigation }: any) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: palette.negroSelva }]}>
         <LinearGradient
-          colors={[`${colors.secondary}14`, `${colors.primaryLight}08`, 'transparent']}
+          colors={[`${palette.azulCielo}14`, `${palette.verdeHoja}08`, 'transparent']}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={[styles.loadingText, { color: colors.muted }]}>
-            Cargando avistamientos...
-          </Text>
+          <ActivityIndicator size="large" color={palette.oroIndigena} />
+          <Text style={styles.loadingText}>Cargando avistamientos...</Text>
         </View>
       </SafeAreaView>
     );
@@ -115,55 +131,53 @@ export const SightingsScreen = ({ navigation }: any) => {
 
   if (sightings.length === 0) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: palette.negroSelva }]}>
         <LinearGradient
-          colors={[`${colors.accent}12`, `${colors.primaryLight}08`, 'transparent']}
+          colors={[`${palette.azulCielo}14`, `${palette.verdeHoja}08`, 'transparent']}
           style={StyleSheet.absoluteFill}
         />
-        <Header title="Avistamientos" subtitle="Registro de campo" />
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Mis Avistamientos</Text>
+        </View>
         <View style={styles.emptyContainer}>
           <Animated.View entering={ZoomIn.delay(80).springify()}>
-            <View style={[styles.emptyIcon, { borderColor: colors.accent }]}>
-              <Feather name="feather" size={46} color={colors.accent} />
-            </View>
+            <Text style={styles.emptyEmoji}>🦜</Text>
           </Animated.View>
           <Animated.Text
             entering={FadeInDown.delay(160).springify()}
-            style={[styles.emptyTitle, { color: colors.foreground }]}
+            style={styles.emptyTitle}
           >
-            Sin avistamientos aun
+            Sin avistamientos aún
           </Animated.Text>
           <Animated.Text
             entering={FadeInDown.delay(220).springify()}
-            style={[styles.emptyText, { color: colors.muted }]}
+            style={styles.emptyText}
           >
             Captura fotos o audios de aves para crear tu primer registro.
           </Animated.Text>
-          <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.emptyAction}>
-            <Button
-              title="Empezar Ahora"
-              onPress={() => navigation.navigate('Home')}
-              fullWidth
-            />
-          </Animated.View>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <LinearGradient
-        colors={[`${colors.secondary}12`, `${colors.primaryLight}08`, 'transparent']}
-        style={StyleSheet.absoluteFill}
-      />
-      <Header
-        title="Avistamientos"
-        subtitle={`${sightings.length} registro${sightings.length !== 1 ? 's' : ''}`}
-        rightIcon={<Feather name="search" size={20} color={colors.accent} />}
-      />
+      <SafeAreaView style={[styles.container, { backgroundColor: palette.negroSelva }]}>
+        <LinearGradient
+          colors={[`${palette.azulCielo}12`, `${palette.verdeHoja}08`, 'transparent']}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Mis Avistamientos</Text>
+          <View style={[styles.countBadge, { backgroundColor: palette.oroIndigena }]}>
+          <Text style={styles.countText}>{sightings.length}</Text>
+        </View>
+      </View>
 
-      <View style={styles.filterRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+      >
         {filters.map((filter) => {
           const selected = activeFilter === filter;
           return (
@@ -173,18 +187,18 @@ export const SightingsScreen = ({ navigation }: any) => {
               style={[
                 styles.filterChip,
                 {
-                  borderColor: selected ? colors.accent : colors.border,
-                  backgroundColor: selected ? `${colors.accent}18` : colors.card,
+                  borderColor: selected ? palette.oroIndigena : 'rgba(255,255,255,0.1)',
+                  backgroundColor: selected ? `${palette.oroIndigena}20` : 'rgba(255,255,255,0.05)',
                 },
               ]}
             >
-              <Text style={[styles.filterText, { color: selected ? colors.accent : colors.muted }]}>
+              <Text                 style={[styles.filterText, { color: selected ? palette.oroIndigena : '#8B9D8B' }]}>
                 {filter}
               </Text>
             </TouchableOpacity>
           );
         })}
-      </View>
+      </ScrollView>
 
       <FlatList
         data={Object.entries(groupedSightings).sort((a: any, b: any) => {
@@ -193,7 +207,7 @@ export const SightingsScreen = ({ navigation }: any) => {
         keyExtractor={([date]: any) => date}
         renderItem={({ item: [date, dateSightings] }: any) => (
           <View style={styles.dateGroup}>
-            <Text style={[styles.dateHeader, { color: colors.muted }]}>{date}</Text>
+            <Text style={styles.dateHeader}>{date}</Text>
             {dateSightings.map((sighting: any, index: number) => renderSightingCard(sighting, index))}
           </View>
         )}
@@ -207,12 +221,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  filterRow: {
+  header: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontWeight: '900',
+    color: '#F0F7EE',
+  },
+  countBadge: {
+    minWidth: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  countText: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#0D1B0F',
+  },
+  filterRow: {
+    paddingHorizontal: 16,
     paddingBottom: 4,
+    gap: 8,
   },
   filterChip: {
     minHeight: 36,
@@ -237,6 +276,7 @@ const styles = StyleSheet.create({
   dateHeader: {
     fontSize: 12,
     fontWeight: '800',
+    color: '#8B9D8B',
     marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
@@ -265,6 +305,7 @@ const styles = StyleSheet.create({
   birdName: {
     fontSize: 15,
     fontWeight: '800',
+    color: '#F0F7EE',
     marginBottom: 7,
   },
   metaRow: {
@@ -286,10 +327,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
   },
+  chipsColumn: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
   confidenceBadge: {
     minWidth: 52,
-    minHeight: 34,
-    borderRadius: 17,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,
@@ -297,6 +342,23 @@ const styles = StyleSheet.create({
   confidenceText: {
     fontSize: 12,
     fontWeight: '900',
+  },
+  riskBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  riskDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  riskText: {
+    fontSize: 10,
+    fontWeight: '700',
   },
   loadingContainer: {
     flex: 1,
@@ -307,6 +369,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 13,
     fontWeight: '600',
+    color: '#8B9D8B',
   },
   emptyContainer: {
     flex: 1,
@@ -314,29 +377,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 28,
   },
-  emptyIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 22,
-    backgroundColor: 'rgba(212, 160, 23, 0.08)',
+  emptyEmoji: {
+    fontSize: 64,
+    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 22,
     fontWeight: '900',
+    color: '#F0F7EE',
     marginBottom: 8,
     textAlign: 'center',
   },
   emptyText: {
     fontSize: 14,
     lineHeight: 20,
+    color: '#8B9D8B',
     textAlign: 'center',
-    marginBottom: 24,
-  },
-  emptyAction: {
-    width: '100%',
   },
 });

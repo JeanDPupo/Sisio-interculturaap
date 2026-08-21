@@ -1,3 +1,3 @@
 export { apiService, ApiService } from './apiService';
 export * from './identification';
-//# sourceMappingURL=index.js.map
+//# sourceMappingURL=index.d.ts.map

@@ -6,9 +6,9 @@ export declare const useOffline: () => {
     syncError: string | null;
     queueLength: number;
     addToQueue: (item: OfflineQueueItem) => void;
-    addPhotoToQueue: any;
-    addAudioToQueue: any;
-    processQueue: any;
+    addPhotoToQueue: (dataUrl: string, latitude?: number, longitude?: number) => void;
+    addAudioToQueue: (dataUrl: string, latitude?: number, longitude?: number) => void;
+    processQueue: () => Promise<number | undefined>;
     clearQueue: () => void;
 };
 //# sourceMappingURL=useOffline.d.ts.map

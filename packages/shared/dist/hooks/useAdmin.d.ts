@@ -1,10 +1,11 @@
+import { AdminStats, ModerationQueue } from '../types';
 export declare const useAdmin: () => {
-    stats: any;
-    moderation: any;
-    loading: any;
-    error: any;
-    getStats: any;
-    getModerationQueue: any;
-    moderateSighting: any;
+    stats: AdminStats | null;
+    moderation: ModerationQueue | null;
+    loading: boolean;
+    error: string | null;
+    getStats: () => Promise<AdminStats>;
+    getModerationQueue: () => Promise<ModerationQueue>;
+    moderateSighting: (sightingId: string, action: "approve" | "reject") => Promise<any>;
 };
 //# sourceMappingURL=useAdmin.d.ts.map

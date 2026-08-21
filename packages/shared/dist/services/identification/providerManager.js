@@ -1,4 +1,4 @@
-import { GroqProvider } from './GroqProvider.js';
+import { GroqProvider } from './GroqProvider';
 function getGroqKey() {
     if (typeof process !== 'undefined' && process.env) {
         return process.env.EXPO_PUBLIC_GROQ_API_KEY || process.env.VITE_GROQ_API_KEY || '';
@@ -15,8 +15,13 @@ const DEFAULT_PROVIDERS = [
     },
 ];
 export class ProviderManager {
-    providers = [];
     constructor(configs) {
+        Object.defineProperty(this, "providers", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+        });
         const cfgs = configs && configs.length > 0 ? configs : DEFAULT_PROVIDERS;
         this.initProviders(cfgs);
     }
@@ -68,3 +73,4 @@ export function getProviderManager(configs) {
     }
     return _instance;
 }
+//# sourceMappingURL=providerManager.js.map

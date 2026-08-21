@@ -4,17 +4,6 @@ import { apiService } from '../services/apiService';
 import { getProviderManager } from '../services/identification/providerManager';
 export const useBird = () => {
     const { birds, loading, error, currentBird, identificationResult, setBirds, setLoading, setError, setCurrentBird, setIdentificationResult, addBird, } = useBirdStore();
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const result = reader.result;
-                resolve(result.split(',')[1] || '');
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    }
     const getBirds = useCallback(async (limit = 20, offset = 0) => {
         setLoading(true);
         try {
@@ -63,6 +52,17 @@ export const useBird = () => {
             setLoading(false);
         }
     }, [setLoading, setError, setBirds]);
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = reader.result;
+                resolve(result.split(',')[1] || '');
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
     const identifyFromPhoto = useCallback(async (file, latitude, longitude) => {
         setLoading(true);
         try {
@@ -126,3 +126,4 @@ export const useBird = () => {
         identifyFromAudio,
     };
 };
+//# sourceMappingURL=useBird.js.map

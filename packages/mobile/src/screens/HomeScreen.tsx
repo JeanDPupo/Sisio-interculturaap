@@ -5,46 +5,33 @@ import {
   ScrollView,
   SafeAreaView,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
 import Animated, {
   FadeInDown,
-  FadeInRight,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withRepeat,
   withTiming,
-  withSpring,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  useAuthStore,
-  useOfflineStore,
-  type Bird,
-} from '@sisio/shared';
-import {
-  GlassCard,
-  Button,
-  BirdCard,
-  StatItem,
-  Header,
-} from '../components';
-import { useThemeColor } from '../hooks';
+import { useAuth, useSightings, useBird, type Bird } from '@sisio/shared';
+import { GlassCard, BirdCard, StatItem, GradientButton } from '../components';
 import { theme } from '../theme';
 
 const { width } = Dimensions.get('window');
 
-// Sample birds for demo
+const COMMUNITIES = ['Arhuaco', 'Kogui', 'Wiwa', 'Kankuamo'];
+
 const sampleBirds: Bird[] = [
   {
     id: '1',
     nombre_cientifico: 'Aquila chrysaetos',
-    nombre_espanol: 'Aguila Real',
+    nombre_espanol: 'Águila Real',
     nombre_nativo: 'Zhigoneshi',
     ecosistema_riesgo: 'medio',
     es_migratoria: false,
@@ -93,436 +80,256 @@ const sampleBirds: Bird[] = [
 
 export const HomeScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useThemeColor();
-  const { user, isGuest } = useAuthStore();
-  const { isOnline } = useOfflineStore();
-  const queueStats = useOfflineStore((state) => state.getQueueStats());
-  const stats = {
-    birdsIdentifiedToday: 0,
-    totalSightingsWeek: 0
-  };
+  const { user } = useAuth();
+  const { sightings, getSightings } = useSightings();
+  const { birds, getBirds } = useBird();
 
-  const [displayBirds, setDisplayBirds] = useState<Bird[]>(sampleBirds);
+  const [stats, setStats] = useState({
+    birdsIdentified: 0,
+    sightingsWeek: 0,
+  });
 
-  const pulse = useSharedValue(0);
+  const photoScale = useSharedValue(1);
+  const audioScale = useSharedValue(1);
 
-  useEffect(() => {
-    pulse.value = withRepeat(
-      withTiming(1, { duration: 2000 }),
-      -1,
-      true
-    );
-  }, []);
-
-  const pulseStyle = useAnimatedStyle(() => ({
-    opacity: 0.5 + pulse.value * 0.5,
+  const photoAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: photoScale.value }],
   }));
 
-  return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        { backgroundColor: colors.background },
-      ]}
-    >
-      {!isOnline && (
-        <Animated.View
-          entering={FadeInDown}
-          style={[
-            styles.offlineBanner,
-            { backgroundColor: colors.danger },
-          ]}
-        >
-          <Feather name="wifi-off" size={16} color="#FFFFFF" />
-          <Text style={styles.offlineText}>
-            Sin conexión · {queueStats.total} en cola
-          </Text>
-        </Animated.View>
-      )}
+  const audioAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: audioScale.value }],
+  }));
 
+  const handlePhotoPressIn = () => {
+    photoScale.value = withSpring(0.95);
+  };
+  const handlePhotoPressOut = () => {
+    photoScale.value = withSpring(1);
+  };
+  const handleAudioPressIn = () => {
+    audioScale.value = withSpring(0.95);
+  };
+  const handleAudioPressOut = () => {
+    audioScale.value = withSpring(1);
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await getBirds(10, 0);
+      } catch {}
+      try {
+        await getSightings(user?.id, 20, 0);
+      } catch {}
+    };
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    if (sightings && sightings.length > 0) {
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const weekSightings = sightings.filter((s: any) => {
+        const date = new Date(s.created_at || s.fecha);
+        return date >= weekAgo;
+      });
+      setStats({
+        birdsIdentified: birds?.length || sampleBirds.length,
+        sightingsWeek: weekSightings.length,
+      });
+    } else {
+      setStats({
+        birdsIdentified: sampleBirds.length,
+        sightingsWeek: 0,
+      });
+    }
+  }, [sightings, birds]);
+
+  const displayBirds = birds && birds.length > 0 ? birds : sampleBirds;
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
-          {
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom + 100,
-          },
+          { paddingBottom: insets.bottom + 100 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <Animated.View entering={FadeInDown.delay(50).springify()}>
-          <View style={styles.headerContent}>
-            <View>
-              <Text style={[styles.greeting, { color: colors.muted }]}>
-                Hola a
-              </Text>
-              <Text style={[styles.greetingName, { color: colors.foreground }]}>
-                {user?.name || 'Sisio'}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.headerLogo}>🦅 Sisio</Text>
+              <Text style={[styles.greeting, { color: 'rgba(240, 247, 238, 0.5)' }]}>
+                Hola, {user?.name || 'Explorador'}
               </Text>
             </View>
             <TouchableOpacity
+              style={styles.settingsButton}
               onPress={() => navigation.navigate('Settings')}
-              style={[
-                styles.settingsButton,
-                { backgroundColor: colors.card, borderColor: colors.cardBorder },
-              ]}
             >
-              <Feather name="settings" size={20} color={colors.accent} />
+              <Feather name="settings" size={20} color="#D4A017" />
             </TouchableOpacity>
           </View>
         </Animated.View>
 
-        {/* Main CTA Buttons */}
         <Animated.View entering={FadeInDown.delay(150).springify()}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            Identificar Ave
-          </Text>
+          <LinearGradient
+            colors={['rgba(45, 80, 22, 0.3)', 'rgba(74, 124, 47, 0.1)', 'rgba(212, 160, 23, 0.1)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroGradient}
+          >
+            <View style={styles.heroContent}>
+              <Text style={styles.heroTitle}>Identificar Ave</Text>
+              <View style={styles.ctaRow}>
+                <Animated.View style={photoAnimatedStyle}>
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('PhotoCapture')}
+                    onPressIn={handlePhotoPressIn}
+                    onPressOut={handlePhotoPressOut}
+                    activeOpacity={0.9}
+                  >
+                    <GlassCard borderRadius={20} intensity={60}>
+                      <LinearGradient
+                        colors={['rgba(45, 80, 22, 0.5)', 'rgba(212, 160, 23, 0.3)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.ctaCardGradient}
+                      >
+                        <View style={styles.ctaIconContainer}>
+                          <Feather name="camera" size={32} color="#8BC34A" />
+                        </View>
+                        <Text style={styles.ctaTitle}>Identificar por Foto</Text>
+                        <Text style={styles.ctaDescription}>Toma o sube una foto</Text>
+                      </LinearGradient>
+                    </GlassCard>
+                  </TouchableOpacity>
+                </Animated.View>
 
-          <View style={styles.ctaButtons}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('PhotoCapture')}
-              activeOpacity={0.9}
-              style={styles.ctaCard}
-            >
-              <BlurView
-                intensity={isDark ? 40 : 20}
-                tint={isDark ? 'dark' : 'light'}
-                style={styles.ctaBlur}
-              >
-                <LinearGradient
-                  colors={[
-                    'rgba(45, 80, 22, 0.4)',
-                    'rgba(74, 124, 47, 0.2)',
-                  ]}
-                  style={styles.ctaGradient}
-                >
-                  <View
-                    style={[
-                      styles.ctaIconContainer,
-                      { backgroundColor: 'rgba(139, 195, 74, 0.2)' },
-                    ]}
+                <Animated.View style={audioAnimatedStyle}>
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('AudioCapture')}
+                    onPressIn={handleAudioPressIn}
+                    onPressOut={handleAudioPressOut}
+                    activeOpacity={0.9}
                   >
-                    <Feather
-                      name="camera"
-                      size={28}
-                      color={colors.primaryLight}
-                    />
-                  </View>
-                  <Text
-                    style={[
-                      styles.ctaTitle,
-                      { color: colors.foreground },
-                    ]}
-                  >
-                    Por Foto
-                  </Text>
-                  <Text
-                    style={[
-                      styles.ctaDescription,
-                      { color: colors.muted },
-                    ]}
-                  >
-                    Toma o sube una foto
-                  </Text>
-                </LinearGradient>
-              </BlurView>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate('AudioCapture')}
-              activeOpacity={0.9}
-              style={styles.ctaCard}
-            >
-              <BlurView
-                intensity={isDark ? 40 : 20}
-                tint={isDark ? 'dark' : 'light'}
-                style={styles.ctaBlur}
-              >
-                <LinearGradient
-                  colors={[
-                    'rgba(212, 160, 23, 0.4)',
-                    'rgba(245, 200, 66, 0.2)',
-                  ]}
-                  style={styles.ctaGradient}
-                >
-                  <View
-                    style={[
-                      styles.ctaIconContainer,
-                      { backgroundColor: 'rgba(245, 200, 66, 0.2)' },
-                    ]}
-                  >
-                    <Feather
-                      name="mic"
-                      size={28}
-                      color={colors.accent}
-                    />
-                  </View>
-                  <Text
-                    style={[
-                      styles.ctaTitle,
-                      { color: colors.foreground },
-                    ]}
-                  >
-                    Por Sonido
-                  </Text>
-                  <Text
-                    style={[
-                      styles.ctaDescription,
-                      { color: colors.muted },
-                    ]}
-                  >
-                    Graba el canto del ave
-                  </Text>
-                </LinearGradient>
-              </BlurView>
-            </TouchableOpacity>
-          </View>
+                    <GlassCard borderRadius={20} intensity={60}>
+                      <LinearGradient
+                        colors={['rgba(212, 160, 23, 0.5)', 'rgba(255, 143, 0, 0.3)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.ctaCardGradient}
+                      >
+                        <View style={[styles.ctaIconContainer, { backgroundColor: 'rgba(245, 200, 66, 0.2)' }]}>
+                          <Feather name="mic" size={32} color="#F5C842" />
+                        </View>
+                        <Text style={styles.ctaTitle}>Identificar por Sonido</Text>
+                        <Text style={styles.ctaDescription}>Graba el canto del ave</Text>
+                      </LinearGradient>
+                    </GlassCard>
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
+            </View>
+          </LinearGradient>
         </Animated.View>
 
-        {/* Stats */}
         <Animated.View entering={FadeInDown.delay(250).springify()}>
           <GlassCard
             style={styles.statsCard}
             intensity={50}
-            gradientColors={[
-              'rgba(30, 80, 100, 0.2)',
-              'rgba(46, 125, 154, 0.1)',
-            ]}
+            gradientColors={['rgba(30, 80, 100, 0.15)', 'rgba(46, 125, 154, 0.05)']}
           >
             <View style={styles.statsContent}>
               <StatItem
-                value={stats.birdsIdentifiedToday || 0}
-                label="Hoy"
-                color={colors.primaryLight}
+                value={stats.birdsIdentified}
+                label="Aves identificadas"
+                color="#8BC34A"
               />
-              <View
-                style={[
-                  styles.statsDivider,
-                  { backgroundColor: colors.border },
-                ]}
-              />
+              <View style={styles.statsDivider} />
               <StatItem
-                value={stats.totalSightingsWeek || 0}
-                label="Esta semana"
-                color={colors.accent}
-              />
-              <View
-                style={[
-                  styles.statsDivider,
-                  { backgroundColor: colors.border },
-                ]}
-              />
-              <StatItem
-                value={displayBirds.length}
-                label="Especies"
-                color={colors.secondaryLight}
+                value={stats.sightingsWeek}
+                label="Avistamientos esta semana"
+                color="#D4A017"
               />
             </View>
           </GlassCard>
         </Animated.View>
 
-        {/* Recent Birds */}
         <Animated.View entering={FadeInDown.delay(350).springify()}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              Aves de la Sierra
-            </Text>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Sightings')}
-            >
-              <Text style={[styles.seeAllText, { color: colors.accent }]}>
-                Ver todo
-              </Text>
+            <Text style={styles.sectionTitle}>Avistamientos recientes</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Sightings')}>
+              <Text style={styles.seeAllText}>Ver todo</Text>
             </TouchableOpacity>
           </View>
-
-          <FlatList
+          <ScrollView
             horizontal
-            data={displayBirds}
-            renderItem={({ item, index }) => (
-              <BirdCard
-                bird={item}
-                onPress={() => {
-                  /* Navigate to bird detail */
-                }}
-                index={index}
-                variant="horizontal"
-              />
-            )}
-            keyExtractor={(item) => item.id}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.birdsList}
-            scrollEnabled
-          />
+            contentContainerStyle={styles.sightingsList}
+          >
+            {displayBirds.map((bird, index) => (
+              <BirdCard
+                key={bird.id}
+                bird={bird}
+                onPress={() => {}}
+              />
+            ))}
+          </ScrollView>
         </Animated.View>
 
-        {/* Quick Links */}
         <Animated.View entering={FadeInDown.delay(450).springify()}>
-          <View style={styles.quickLinksContainer}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Map')}
-              activeOpacity={0.8}
-            >
-              <GlassCard
-                intensity={60}
-                borderRadius={16}
-                gradientColors={[
-                  'rgba(26, 58, 74, 0.2)',
-                  'rgba(46, 125, 154, 0.1)',
-                ]}
-              >
-                <View style={styles.quickLinkContent}>
-                  <View
-                    style={[
-                      styles.quickLinkIcon,
-                      { backgroundColor: 'rgba(46, 125, 154, 0.2)' },
-                    ]}
-                  >
-                    <Feather name="map" size={20} color={colors.secondary} />
-                  </View>
-                  <View style={styles.quickLinkText}>
-                    <Text
-                      style={[
-                        styles.quickLinkTitle,
-                        { color: colors.foreground },
-                      ]}
-                    >
-                      Mapa
-                    </Text>
-                    <Text
-                      style={[
-                        styles.quickLinkDesc,
-                        { color: colors.muted },
-                      ]}
-                    >
-                      Avistamientos cercanos
-                    </Text>
-                  </View>
-                  <Feather
-                    name="chevron-right"
-                    size={20}
-                    color={colors.muted}
-                  />
-                </View>
-              </GlassCard>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Sightings')}
-              activeOpacity={0.8}
-            >
-              <GlassCard
-                intensity={60}
-                borderRadius={16}
-                gradientColors={[
-                  'rgba(45, 80, 22, 0.2)',
-                  'rgba(74, 124, 47, 0.1)',
-                ]}
-              >
-                <View style={styles.quickLinkContent}>
-                  <View
-                    style={[
-                      styles.quickLinkIcon,
-                      {
-                        backgroundColor: 'rgba(139, 195, 74, 0.2)',
-                      },
-                    ]}
-                  >
-                    <Feather
-                      name="list"
-                      size={20}
-                      color={colors.primaryLight}
-                    />
-                  </View>
-                  <View style={styles.quickLinkText}>
-                    <Text
-                      style={[
-                        styles.quickLinkTitle,
-                        { color: colors.foreground },
-                      ]}
-                    >
-                      Avistamientos
-                    </Text>
-                    <Text
-                      style={[
-                        styles.quickLinkDesc,
-                        { color: colors.muted },
-                      ]}
-                    >
-                      Tus observaciones
-                    </Text>
-                  </View>
-                  <Feather
-                    name="chevron-right"
-                    size={20}
-                    color={colors.muted}
-                  />
-                </View>
-              </GlassCard>
-            </TouchableOpacity>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Aves de la Sierra</Text>
+          </View>
+          <View style={styles.birdsGrid}>
+            {displayBirds.map((bird, index) => (
+              <BirdCard
+                key={`grid-${bird.id}`}
+                bird={bird}
+                onPress={() => {}}
+              />
+            ))}
           </View>
         </Animated.View>
 
-        {/* Cultural Section */}
         <Animated.View entering={FadeInDown.delay(550).springify()}>
-          <TouchableOpacity activeOpacity={0.9}>
-            <LinearGradient
-              colors={[
-                'rgba(26, 58, 74, 0.5)',
-                'rgba(46, 125, 154, 0.2)',
-              ]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[
-                styles.culturalCard,
-                {
-                  borderColor: colors.cardBorder,
-                },
-              ]}
-            >
-              <View style={styles.culturalContent}>
-                <View
-                  style={[
-                    styles.culturalIconContainer,
-                    {
-                      backgroundColor: 'rgba(46, 125, 154, 0.2)',
-                    },
-                  ]}
-                >
-                  <Feather
-                    name="book-open"
-                    size={24}
-                    color={colors.secondary}
-                  />
-                </View>
-                <View style={styles.culturalText}>
-                  <Text
-                    style={[
-                      styles.culturalTitle,
-                      { color: colors.foreground },
-                    ]}
-                  >
-                    Conocimiento Ancestral
-                  </Text>
-                  <Text
-                    style={[
-                      styles.culturalDescription,
-                      { color: colors.muted },
-                    ]}
-                  >
-                    Descubre la cosmovisión de los pueblos Arhuaco, Kogui y Wiwa
-                  </Text>
-                </View>
-                <Feather
-                  name="chevron-right"
-                  size={20}
-                  color={colors.muted}
-                />
+          <LinearGradient
+            colors={['rgba(26, 58, 74, 0.4)', 'rgba(46, 125, 154, 0.15)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.culturalCard}
+          >
+            <View style={styles.culturalHeader}>
+              <View style={styles.culturalIconContainer}>
+                <Feather name="book-open" size={24} color="#2E7D9A" />
               </View>
-            </LinearGradient>
-          </TouchableOpacity>
+              <View style={styles.culturalHeaderText}>
+                <Text style={styles.culturalTitle}>Conocimiento Ancestral</Text>
+                <Text style={styles.culturalDescription}>
+                  La sabiduría de los pueblos indígenas sobre las aves de la Sierra Nevada
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.communityChips}>
+              {COMMUNITIES.map((community, index) => (
+                <Animated.View
+                  key={community}
+                  entering={FadeInDown.delay(600 + index * 100).springify()}
+                  style={styles.communityChip}
+                >
+                  <Text style={styles.communityChipText}>{community}</Text>
+                </Animated.View>
+              ))}
+            </View>
+
+            <Text style={styles.culturalFooter}>
+              Preservando la memoria viva de la Sierra Nevada de Santa Marta
+            </Text>
+          </LinearGradient>
         </Animated.View>
       </ScrollView>
     </SafeAreaView>
@@ -530,21 +337,9 @@ export const HomeScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-  },
-  offlineBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  offlineText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '500',
+    backgroundColor: '#0D1B0F',
   },
   scrollView: {
     flex: 1,
@@ -552,73 +347,86 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
   },
-  headerContent: {
+
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 16,
   },
-  greeting: {
-    fontSize: 12,
-    fontWeight: '500',
+  headerLeft: {
+    flex: 1,
   },
-  greetingName: {
-    fontSize: 24,
+  headerLogo: {
+    fontSize: 22,
     fontWeight: '800',
-    letterSpacing: -0.5,
+    color: '#F0F7EE',
+    marginBottom: 4,
+  },
+  greeting: {
+    fontSize: 14,
+    fontWeight: '400',
   },
   settingsButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
   },
-  sectionTitle: {
+
+  heroGradient: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  heroContent: {
+    padding: 20,
+  },
+  heroTitle: {
     fontSize: 18,
     fontWeight: '700',
-    marginBottom: 12,
-    marginTop: 12,
+    color: '#F0F7EE',
+    marginBottom: 16,
   },
-  ctaButtons: {
+  ctaRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 24,
   },
-  ctaCard: {
-    flex: 1,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  ctaBlur: {
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  ctaGradient: {
+  ctaCardGradient: {
     padding: 20,
     alignItems: 'center',
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    minWidth: (width - 72) / 2,
   },
   ctaIconContainer: {
     width: 60,
     height: 60,
     borderRadius: 30,
+    backgroundColor: 'rgba(139, 195, 74, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
   ctaTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
+    color: '#F0F7EE',
     marginBottom: 4,
+    textAlign: 'center',
   },
   ctaDescription: {
     fontSize: 12,
+    fontWeight: '400',
+    color: 'rgba(240, 247, 238, 0.5)',
     textAlign: 'center',
   },
+
   statsCard: {
     marginBottom: 24,
     overflow: 'hidden',
@@ -633,78 +441,101 @@ const styles = StyleSheet.create({
   statsDivider: {
     width: 1,
     height: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    marginTop: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#F0F7EE',
   },
   seeAllText: {
     fontSize: 14,
     fontWeight: '600',
+    color: '#D4A017',
   },
-  birdsList: {
+
+  sightingsList: {
     paddingRight: 16,
     marginBottom: 24,
   },
-  quickLinksContainer: {
-    gap: 12,
-    marginBottom: 24,
-  },
-  quickLinkContent: {
+
+  birdsGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 24,
     gap: 12,
   },
-  quickLinkIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickLinkText: {
-    flex: 1,
-  },
-  quickLinkTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  quickLinkDesc: {
-    fontSize: 12,
-  },
+
   culturalCard: {
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
+    borderColor: 'rgba(46, 125, 154, 0.2)',
     overflow: 'hidden',
+    padding: 20,
     marginBottom: 24,
   },
-  culturalContent: {
+  culturalHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    gap: 12,
+    alignItems: 'flex-start',
+    gap: 16,
+    marginBottom: 20,
   },
   culturalIconContainer: {
-    width: 50,
-    height: 50,
+    width: 48,
+    height: 48,
     borderRadius: 12,
+    backgroundColor: 'rgba(46, 125, 154, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  culturalText: {
+  culturalHeaderText: {
     flex: 1,
   },
   culturalTitle: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#F0F7EE',
     marginBottom: 4,
   },
   culturalDescription: {
     fontSize: 13,
+    fontWeight: '400',
+    color: 'rgba(240, 247, 238, 0.5)',
     lineHeight: 18,
+  },
+  communityChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  communityChip: {
+    backgroundColor: 'rgba(212, 160, 23, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 160, 23, 0.25)',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  communityChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#D4A017',
+  },
+  culturalFooter: {
+    fontSize: 11,
+    fontWeight: '400',
+    color: 'rgba(240, 247, 238, 0.3)',
+    fontStyle: 'italic',
+    lineHeight: 16,
   },
 });
