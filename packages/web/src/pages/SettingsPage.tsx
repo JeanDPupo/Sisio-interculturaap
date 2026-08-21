@@ -241,7 +241,7 @@ export const SettingsPage: React.FC = () => {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <Box sx={{ ...glassmorphism, p: 3.5, mb: 3 }}>
+            <Box sx={{ ...glassmorphism, p: 5, mb: 3 }}>
               <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2.5 }}>
                 <Box
                   sx={{
@@ -316,7 +316,7 @@ export const SettingsPage: React.FC = () => {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <Box sx={{ ...glassmorphism, p: 3.5, mb: 3 }}>
+            <Box sx={{ ...glassmorphism, p: 5, mb: 3 }}>
               <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
                 <Box
                   sx={{
@@ -385,7 +385,7 @@ export const SettingsPage: React.FC = () => {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <Box sx={{ ...glassmorphism, p: 3.5, mb: 3 }}>
+            <Box sx={{ ...glassmorphism, p: 5, mb: 3 }}>
               <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2.5 }}>
                 <Box
                   sx={{

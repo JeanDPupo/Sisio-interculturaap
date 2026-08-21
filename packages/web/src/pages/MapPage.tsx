@@ -161,7 +161,7 @@ const LegendPanel: React.FC = () => (
       bottom: 76,
       left: 12,
       zIndex: 999,
-      p: 1.5,
+      p: 2.5,
       minWidth: 150,
     }}
   >
