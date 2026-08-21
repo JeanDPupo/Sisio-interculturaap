@@ -469,7 +469,6 @@ export const BirdResultPage: React.FC = () => {
               Compartir
             </Button>
           </Box>
-          </Box>
         </MotionDiv>
 
         <AnimatePresence>
