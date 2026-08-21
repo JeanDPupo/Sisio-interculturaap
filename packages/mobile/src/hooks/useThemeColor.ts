@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useColorScheme } from 'react-native';
-import { theme, lightTheme, darkTheme } from '../theme';
+import { lightTheme, darkTheme, theme } from '../theme';
 
 export const useThemeColor = () => {
   const systemColorScheme = useColorScheme();

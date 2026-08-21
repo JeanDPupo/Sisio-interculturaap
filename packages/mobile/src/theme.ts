@@ -1,141 +1,236 @@
 import { colors as sharedColors } from '@sisio/shared';
 
-const lightTheme = {
-  colors: {
-    foreground: sharedColors.negroSelva,
-    text: sharedColors.negroSelva,
-    background: sharedColors.blancoNiebla,
-    surface: 'rgba(255, 255, 255, 0.72)',
-    muted: '#7A8C7A',
-    textSecondary: '#7A8C7A',
-    card: 'rgba(45, 80, 22, 0.05)',
-    cardBorder: 'rgba(45, 80, 22, 0.1)',
-    border: 'rgba(45, 80, 22, 0.15)',
+export { sharedColors };
 
-    // Primary (Verde Selva)
-    primary: sharedColors.verdeSelva,
-    primaryLight: sharedColors.verdeHoja,
-    primaryDark: '#1a3a0f',
-
-    // Secondary (Azul)
-    secondary: sharedColors.azulCielo,
-    secondaryLight: sharedColors.azulClaro,
-    secondaryDark: sharedColors.azulNoche,
-
-    // Accent (Oro)
-    accent: sharedColors.oroIndigena,
-    accentLight: sharedColors.ambarSolar,
-    accentDark: '#B8860B',
-
-    // Risk colors
-    success: sharedColors.riesgoBajo,
-    warning: sharedColors.riesgoMedio,
-    danger: sharedColors.riesgoAlto,
-    error: sharedColors.riesgoAlto,
-    blancoNiebla: sharedColors.blancoNiebla,
-
-    // Backdrop
-    backdrop: 'rgba(13, 27, 15, 0.4)',
-  },
+export const palette = {
+  verdeSelva: sharedColors.verdeSelva,
+  verdeMusgo: sharedColors.verdeMusgo,
+  verdeHoja: sharedColors.verdeHoja,
+  azulNoche: sharedColors.azulNoche,
+  azulCielo: sharedColors.azulCielo,
+  azulClaro: sharedColors.azulClaro,
+  oroIndigena: sharedColors.oroIndigena,
+  ambarSolar: sharedColors.ambarSolar,
+  naranjaAtardecer: sharedColors.naranjaAtardecer,
+  negroSelva: sharedColors.negroSelva,
+  blancoNiebla: sharedColors.blancoNiebla,
+  riesgoBajo: sharedColors.riesgoBajo,
+  riesgoMedio: sharedColors.riesgoMedio,
+  riesgoAlto: sharedColors.riesgoAlto,
+  marronTierra: sharedColors.marronTierra,
+  arcilla: '#8D6E63',
+  arenaClara: sharedColors.arenaClara,
 };
 
-const darkTheme = {
-  colors: {
-    foreground: sharedColors.blancoNiebla,
-    text: sharedColors.blancoNiebla,
-    background: sharedColors.negroSelva,
-    surface: 'rgba(255, 255, 255, 0.06)',
-    muted: '#8B9D8B',
-    textSecondary: '#8B9D8B',
-    card: 'rgba(255, 255, 255, 0.05)',
-    cardBorder: 'rgba(255, 255, 255, 0.08)',
+export const gradients = {
+  forestGradient: [palette.verdeSelva, palette.verdeHoja] as const,
+  sunsetGradient: [palette.oroIndigena, palette.naranjaAtardecer] as const,
+  oceanGradient: [palette.azulNoche, palette.azulCielo] as const,
+  goldGradient: [palette.ambarSolar, palette.oroIndigena] as const,
+};
+
+export const glassmorphism = {
+  dark: {
+    background: 'rgba(255, 255, 255, 0.05)',
     border: 'rgba(255, 255, 255, 0.1)',
-
-    // Primary (Verde Selva)
-    primary: sharedColors.verdeSelva,
-    primaryLight: sharedColors.verdeHoja,
-    primaryDark: '#1a3a0f',
-
-    // Secondary (Azul)
-    secondary: sharedColors.azulCielo,
-    secondaryLight: '#64B5F6',
-    secondaryDark: sharedColors.azulNoche,
-
-    // Accent (Oro)
-    accent: sharedColors.oroIndigena,
-    accentLight: sharedColors.ambarSolar,
-    accentDark: '#B8860B',
-
-    // Risk colors
-    success: sharedColors.riesgoBajo,
-    warning: sharedColors.riesgoMedio,
-    danger: sharedColors.riesgoAlto,
-    error: sharedColors.riesgoAlto,
-    blancoNiebla: sharedColors.blancoNiebla,
-
-    // Backdrop
-    backdrop: 'rgba(255, 255, 255, 0.1)',
+    overlay: 'rgba(0, 0, 0, 0.2)',
+  },
+  light: {
+    background: 'rgba(255, 255, 255, 0.6)',
+    border: 'rgba(255, 255, 255, 0.3)',
+    overlay: 'rgba(255, 255, 255, 0.1)',
   },
 };
 
-export { lightTheme, darkTheme };
-
-export const theme = {
-  dark: true,
-  colors: darkTheme.colors,
+const buildTheme = (dark: boolean) => ({
+  dark,
+  colors: dark
+    ? {
+        foreground: palette.blancoNiebla,
+        text: palette.blancoNiebla,
+        background: palette.negroSelva,
+        surface: 'rgba(255, 255, 255, 0.06)',
+        muted: '#8B9D8B',
+        textSecondary: '#8B9D8B',
+        card: 'rgba(255, 255, 255, 0.05)',
+        cardBorder: 'rgba(255, 255, 255, 0.08)',
+        border: 'rgba(255, 255, 255, 0.1)',
+        primary: palette.verdeSelva,
+        primaryLight: palette.verdeHoja,
+        primaryDark: '#1a3a0f',
+        secondary: palette.azulCielo,
+        secondaryLight: palette.azulClaro,
+        secondaryDark: palette.azulNoche,
+        accent: palette.oroIndigena,
+        accentLight: palette.ambarSolar,
+        accentDark: '#B8860B',
+        success: palette.riesgoBajo,
+        warning: palette.riesgoMedio,
+        danger: palette.riesgoAlto,
+        error: palette.riesgoAlto,
+        blancoNiebla: palette.blancoNiebla,
+        backdrop: 'rgba(255, 255, 255, 0.1)',
+      }
+    : {
+        foreground: palette.negroSelva,
+        text: palette.negroSelva,
+        background: palette.blancoNiebla,
+        surface: 'rgba(255, 255, 255, 0.72)',
+        muted: '#7A8C7A',
+        textSecondary: '#7A8C7A',
+        card: 'rgba(45, 80, 22, 0.05)',
+        cardBorder: 'rgba(45, 80, 22, 0.1)',
+        border: 'rgba(45, 80, 22, 0.15)',
+        primary: palette.verdeSelva,
+        primaryLight: palette.verdeHoja,
+        primaryDark: '#1a3a0f',
+        secondary: palette.azulCielo,
+        secondaryLight: palette.azulClaro,
+        secondaryDark: palette.azulNoche,
+        accent: palette.oroIndigena,
+        accentLight: palette.ambarSolar,
+        accentDark: '#B8860B',
+        success: palette.riesgoBajo,
+        warning: palette.riesgoMedio,
+        danger: palette.riesgoAlto,
+        error: palette.riesgoAlto,
+        blancoNiebla: palette.blancoNiebla,
+        backdrop: 'rgba(13, 27, 15, 0.4)',
+      },
   fonts: {
     display: 'PlayfairDisplay_700Bold',
-    native: 'Lora_400Regular',
+    displayRegular: 'PlayfairDisplay_400Regular',
     body: 'Inter_400Regular',
+    bodyMedium: 'Inter_500Medium',
     bodySemiBold: 'Inter_600SemiBold',
     bodyBold: 'Inter_700Bold',
+    native: 'Lora_400Regular',
+    nativeBold: 'Lora_700Bold',
     mono: 'JetBrainsMono_400Regular',
+    monoBold: 'JetBrainsMono_700Bold',
+  },
+  typography: {
+    displayLarge: { fontSize: 34, lineHeight: 41, letterSpacing: 0.25 },
+    displayMedium: { fontSize: 28, lineHeight: 34, letterSpacing: 0 },
+    displaySmall: { fontSize: 24, lineHeight: 29, letterSpacing: 0 },
+    h1: { fontSize: 22, lineHeight: 27, letterSpacing: 0.15 },
+    h2: { fontSize: 20, lineHeight: 24, letterSpacing: 0.15 },
+    h3: { fontSize: 18, lineHeight: 22, letterSpacing: 0.15 },
+    bodyLarge: { fontSize: 16, lineHeight: 24, letterSpacing: 0.5 },
+    bodyMedium: { fontSize: 14, lineHeight: 20, letterSpacing: 0.25 },
+    bodySmall: { fontSize: 12, lineHeight: 16, letterSpacing: 0.4 },
+    caption: { fontSize: 11, lineHeight: 14, letterSpacing: 0.4 },
+    overline: { fontSize: 10, lineHeight: 12, letterSpacing: 1.5 },
+    native: { fontSize: 18, lineHeight: 28, letterSpacing: 0 },
+    nativeSmall: { fontSize: 14, lineHeight: 22, letterSpacing: 0 },
+    mono: { fontSize: 13, lineHeight: 20, letterSpacing: 0 },
   },
   spacing: {
+    zero: 0,
+    xxs: 2,
     xs: 4,
-    sm: 8,
-    md: 16,
-    lg: 24,
-    xl: 32,
-    xxl: 40,
-  },
-  borderRadius: {
     sm: 8,
     md: 12,
     lg: 16,
     xl: 20,
     xxl: 24,
+    xxxl: 32,
+    huge: 40,
+    massive: 48,
+  },
+  borderRadius: {
+    none: 0,
+    sm: 4,
+    md: 8,
+    lg: 12,
+    xl: 16,
+    xxl: 20,
+    round: 9999,
   },
   shadows: {
+    none: {
+      shadowColor: 'transparent',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0,
+      shadowRadius: 0,
+      elevation: 0,
+    },
     sm: {
-      shadowColor: '#000',
+      shadowColor: dark ? '#000' : palette.negroSelva,
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.2,
-      shadowRadius: 1.41,
+      shadowOpacity: 0.18,
+      shadowRadius: 1.5,
       elevation: 2,
     },
     md: {
-      shadowColor: '#000',
+      shadowColor: dark ? '#000' : palette.negroSelva,
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5,
+      shadowOpacity: 0.22,
+      shadowRadius: 4,
+      elevation: 4,
     },
     lg: {
-      shadowColor: '#000',
+      shadowColor: dark ? '#000' : palette.negroSelva,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 4.65,
+      shadowOpacity: 0.28,
+      shadowRadius: 8,
       elevation: 8,
     },
+    xl: {
+      shadowColor: dark ? '#000' : palette.negroSelva,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.34,
+      shadowRadius: 12,
+      elevation: 12,
+    },
+    glow: {
+      shadowColor: palette.verdeHoja,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.5,
+      shadowRadius: 12,
+      elevation: 6,
+    },
+    glowAccent: {
+      shadowColor: palette.oroIndigena,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.45,
+      shadowRadius: 10,
+      elevation: 6,
+    },
   },
-};
+  tabBar: dark
+    ? {
+        backgroundColor: 'rgba(13, 27, 15, 0.95)',
+        borderTopColor: 'rgba(255, 255, 255, 0.08)',
+        borderTopWidth: 1,
+        height: 64,
+        paddingBottom: 8,
+        paddingTop: 4,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      }
+    : {
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderTopColor: 'rgba(45, 80, 22, 0.1)',
+        borderTopWidth: 1,
+        height: 64,
+        paddingBottom: 8,
+        paddingTop: 4,
+        elevation: 8,
+        shadowColor: palette.negroSelva,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+});
 
-export const tabBarStyle = {
-  backgroundColor: theme.colors.card,
-  borderTopColor: theme.colors.border,
-  borderTopWidth: 1,
-  height: 60,
-  paddingBottom: 8,
-  paddingTop: 4,
-};
+export const lightTheme = buildTheme(false);
+export const darkTheme = buildTheme(true);
+
+export const theme = darkTheme;
+
+export type AppTheme = ReturnType<typeof buildTheme>;
+export type ThemeColors = ReturnType<typeof buildTheme>['colors'];
