@@ -616,7 +616,7 @@ const ProfilePage: React.FC = () => {
           <Box
             sx={{
               ...glassmorphism,
-              p: 3,
+              p: 3.5,
             }}
           >
             <Typography
