@@ -60,8 +60,9 @@ export const LoginPage: React.FC = () => {
   return (
     <Container maxWidth="sm" sx={{ py: 8 }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <img src="/assets/images/logo/logo.png" alt="Sisio" style={{ height: 48, marginBottom: 8 }} />
         <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 2 }}>
-          🦅 Sisio
+          Sisio
         </Typography>
         <Typography variant="body1" color="textSecondary">
           Documentar y proteger la biodiversidad local

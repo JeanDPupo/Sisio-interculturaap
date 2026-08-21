@@ -59,7 +59,7 @@ export const Navigation: React.FC = () => {
             sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', mr: 2 }}
             onClick={() => navigate('/')}
           >
-            <Typography sx={{ fontSize: 24 }}>🦅</Typography>
+            <img src="/assets/images/logo/logo.png" alt="Sisio" style={{ height: 32 }} />
             <Typography
               variant="h6"
               sx={{

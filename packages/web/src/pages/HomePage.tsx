@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Container, Typography, Button, Grid, Paper } from '@mui/material';
+import { Box, Container, Typography, Button, Grid, Paper, styled } from '@mui/material';
 import { motion, useInView, useScroll, useTransform, animate } from 'framer-motion';
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-import MicIcon from '@mui/icons-material/Mic';
-import PetsIcon from '@mui/icons-material/Pets';
-import MapIcon from '@mui/icons-material/Map';
-import ListIcon from '@mui/icons-material/List';
-import PersonIcon from '@mui/icons-material/Person';
 import { useAuth, useOffline } from '@sisio/shared';
 
 const MotionDiv = motion.div;
+
+const MotionBg = styled(motion.div)({
+  position: 'absolute',
+  inset: 0,
+  background: 'linear-gradient(180deg, #0D1B0F 0%, #1A3A4A 40%, #2D5016 100%)',
+});
 
 const ScrollReveal: React.FC<{ children: React.ReactNode; delay?: number }> = ({ children, delay = 0 }) => {
   const ref = useRef(null);
@@ -59,10 +59,10 @@ const glassStyle = {
 };
 
 const navCards = [
-  { label: 'Aves', icon: <PetsIcon sx={{ fontSize: 32 }} />, path: '/birds', color: '#8BC34A' },
-  { label: 'Avistamientos', icon: <ListIcon sx={{ fontSize: 32 }} />, path: '/sightings', color: '#64B5F6' },
-  { label: 'Mapa', icon: <MapIcon sx={{ fontSize: 32 }} />, path: '/map', color: '#4A7C2F' },
-  { label: 'Perfil', icon: <PersonIcon sx={{ fontSize: 32 }} />, path: '/profile', color: '#D4A017' },
+  { label: 'Aves', icon: <img src="/assets/icons/nav/catalog.svg" alt="Aves" style={{ width: 32, height: 32 }} />, path: '/birds', color: '#8BC34A' },
+  { label: 'Avistamientos', icon: <img src="/assets/icons/nav/gallery.svg" alt="Avistamientos" style={{ width: 32, height: 32 }} />, path: '/sightings', color: '#64B5F6' },
+  { label: 'Mapa', icon: <img src="/assets/icons/nav/map.svg" alt="Mapa" style={{ width: 32, height: 32 }} />, path: '/map', color: '#4A7C2F' },
+  { label: 'Perfil', icon: <img src="/assets/icons/nav/profile.svg" alt="Perfil" style={{ width: 32, height: 32 }} />, path: '/profile', color: '#D4A017' },
 ];
 
 const communities = [
@@ -100,13 +100,8 @@ export const HomePage: React.FC = () => {
           justifyContent: 'center',
         }}
       >
-        <MotionDiv
+        <MotionBg
           style={{ y: bgY }}
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(180deg, #0D1B0F 0%, #1A3A4A 40%, #2D5016 100%)',
-          }}
         />
         <Box
           sx={{
@@ -141,56 +136,65 @@ export const HomePage: React.FC = () => {
         <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
           <MotionDiv
             style={{ opacity: titleOpacity, scale: titleScale }}
-            sx={{ textAlign: 'center', mb: 5, mt: 4 }}
           >
+            <Box sx={{ textAlign: 'center', mb: 5, mt: 4 }}>
             <MotionDiv
               initial={{ opacity: 0, scale: 0.7 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-              variant="h2"
-              sx={{
-                fontFamily: '"Playfair Display", serif',
-                fontWeight: 700,
-                color: '#F0F7EE',
-                mb: 1,
-                fontSize: { xs: '3rem', sm: '4rem', md: '5.5rem' },
-                letterSpacing: '-0.02em',
-                textShadow: '0 4px 40px rgba(0,0,0,0.3)',
-              }}
             >
-              Sisio
+              <Typography
+                variant="h2"
+                sx={{
+                  fontFamily: '"Playfair Display", serif',
+                  fontWeight: 700,
+                  color: '#F0F7EE',
+                  mb: 1,
+                  fontSize: { xs: '3rem', sm: '4rem', md: '5.5rem' },
+                  letterSpacing: '-0.02em',
+                  textShadow: '0 4px 40px rgba(0,0,0,0.3)',
+                }}
+              >
+                Sisio
+              </Typography>
             </MotionDiv>
 
             <MotionDiv
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}
-              variant="h6"
-              sx={{
-                color: '#b0c4a0',
-                mb: 1,
-                fontSize: { xs: '0.95rem', sm: '1.1rem' },
-                lineHeight: 1.6,
-              }}
             >
-              {isGuest
-                ? 'Explora la sabiduría ancestral de la Sierra Nevada'
-                : `Bienvenido de vuelta, ${user?.name || 'explorador'}`}
+              <Typography
+                variant="h6"
+                sx={{
+                  color: '#b0c4a0',
+                  mb: 1,
+                  fontSize: { xs: '0.95rem', sm: '1.1rem' },
+                  lineHeight: 1.6,
+                }}
+              >
+                {isGuest
+                  ? 'Explora la sabiduría ancestral de la Sierra Nevada'
+                  : `Bienvenido de vuelta, ${user?.name || 'explorador'}`}
+              </Typography>
             </MotionDiv>
 
             <MotionDiv
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.45 }}
-              variant="body2"
-              sx={{
-                color: 'rgba(255,255,255,0.45)',
-                mb: 5,
-                fontSize: { xs: '0.8rem', sm: '0.85rem' },
-                letterSpacing: '0.04em',
-              }}
             >
-              Comunidades Arhuaco · Kogui · Wiwa · Kankuamo
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'rgba(255,255,255,0.45)',
+                  mb: 5,
+                  fontSize: { xs: '0.8rem', sm: '0.85rem' },
+                  letterSpacing: '0.04em',
+                }}
+              >
+                Comunidades Arhuaco · Kogui · Wiwa · Kankuamo
+              </Typography>
             </MotionDiv>
 
             {/* CTA BUTTONS */}
@@ -198,13 +202,15 @@ export const HomePage: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.55 }}
-              sx={{
-                display: 'flex',
-                gap: 2,
-                justifyContent: 'center',
-                flexWrap: 'wrap',
-              }}
             >
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  justifyContent: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
               <MotionDiv
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
@@ -212,7 +218,7 @@ export const HomePage: React.FC = () => {
                 <Button
                   variant="contained"
                   size="large"
-                  startIcon={<PhotoCameraIcon />}
+                  startIcon={<img src="/assets/icons/nav/camera.svg" alt="" style={{ width: 20, height: 20 }} />}
                   onClick={() => navigate('/photo-upload')}
                   sx={{
                     py: 2.2,
@@ -242,7 +248,7 @@ export const HomePage: React.FC = () => {
                 <Button
                   variant="contained"
                   size="large"
-                  startIcon={<MicIcon />}
+                  startIcon={<img src="/assets/icons/nav/microphone.svg" alt="" style={{ width: 20, height: 20 }} />}
                   onClick={() => navigate('/audio-upload')}
                   sx={{
                     py: 2.2,
@@ -264,7 +270,9 @@ export const HomePage: React.FC = () => {
                   Identificar por Canto
                 </Button>
               </MotionDiv>
+              </Box>
             </MotionDiv>
+            </Box>
           </MotionDiv>
         </Container>
 
@@ -303,30 +311,32 @@ export const HomePage: React.FC = () => {
                       }}
                       transition={{ duration: 0.3 }}
                       onClick={() => navigate(card.path)}
-                      sx={{
-                        ...glassStyle,
-                        p: { xs: 2.5, sm: 3 },
-                        textAlign: 'center',
-                        cursor: 'pointer',
-                        overflow: 'hidden',
-                        position: 'relative',
-                        '&::after': {
-                          content: '""',
-                          position: 'absolute',
-                          top: 0,
-                          left: '-100%',
-                          width: '200%',
-                          height: '100%',
-                          background:
-                            'linear-gradient(90deg, transparent, rgba(212,160,23,0.06), transparent)',
-                          transition: 'left 0.6s ease',
-                          pointerEvents: 'none',
-                        },
-                        '&:hover::after': {
-                          left: '100%',
-                        },
-                      }}
                     >
+                      <Box
+                        sx={{
+                          ...glassStyle,
+                          p: { xs: 2.5, sm: 3 },
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          overflow: 'hidden',
+                          position: 'relative',
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: '-100%',
+                            width: '200%',
+                            height: '100%',
+                            background:
+                              'linear-gradient(90deg, transparent, rgba(212,160,23,0.06), transparent)',
+                            transition: 'left 0.6s ease',
+                            pointerEvents: 'none',
+                          },
+                          '&:hover::after': {
+                            left: '100%',
+                          },
+                        }}
+                      >
                       <Box sx={{ color: card.color, mb: 1 }}>{card.icon}</Box>
                       <Typography
                         variant="body2"
@@ -338,6 +348,7 @@ export const HomePage: React.FC = () => {
                       >
                         {card.label}
                       </Typography>
+                      </Box>
                     </MotionDiv>
                   </MotionDiv>
                 </Grid>
@@ -399,20 +410,26 @@ export const HomePage: React.FC = () => {
                 {communities.map((c, i) => (
                   <MotionDiv
                     key={c.label}
-                    label={c.label}
-                    size="medium"
                     initial={{ opacity: 0, scale: 0.8 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: 0.2 + i * 0.1 }}
-                    sx={{
-                      color: '#F0F7EE',
-                      borderColor: c.color,
-                      fontWeight: 600,
-                      fontSize: '0.85rem',
-                    }}
-                    variant="outlined"
-                  />
+                  >
+                    <Box
+                      sx={{
+                        color: '#F0F7EE',
+                        borderColor: c.color,
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        border: '1px solid',
+                        borderRadius: 20,
+                        px: 2,
+                        py: 0.5,
+                      }}
+                    >
+                      {c.label}
+                    </Box>
+                  </MotionDiv>
                 ))}
               </Box>
             </Paper>

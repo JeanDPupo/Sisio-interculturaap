@@ -27,7 +27,7 @@ const AdminPage = React.lazy(() => import('./pages/AdminPage').then(m => ({ defa
 const LoadingFallback = () => (
   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#0D1B0F' }}>
     <Box sx={{ textAlign: 'center' }}>
-      <Box sx={{ fontSize: 48, animation: 'spinBird 2s linear infinite', display: 'inline-block' }}>🦅</Box>
+      <img src="/assets/images/logo/logo.png" alt="Sisio" style={{ height: 48, animation: 'spinBird 2s linear infinite' }} />
       <Box sx={{ color: '#b0c4a0', mt: 2, fontFamily: '"Playfair Display", serif' }}>Cargando...</Box>
     </Box>
   </Box>

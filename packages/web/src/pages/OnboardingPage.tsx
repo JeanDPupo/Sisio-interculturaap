@@ -9,6 +9,7 @@ import {
   Alert,
   IconButton,
   InputAdornment,
+  styled,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
@@ -493,16 +494,18 @@ export const OnboardingPage: React.FC = () => {
             animate="center"
             exit="exit"
             transition={{ type: 'spring', stiffness: 280, damping: 28, mass: 0.8 }}
-            sx={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              p: { xs: 3, sm: 4 },
-              textAlign: 'center',
-            }}
           >
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                p: { xs: 3, sm: 4 },
+                textAlign: 'center',
+              }}
+            >
             {/* SLIDE 0: Hero */}
             {slide === 0 && (
               <Box>
@@ -574,8 +577,8 @@ export const OnboardingPage: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
-                  sx={{ mb: 5 }}
                 >
+                  <Box sx={{ mb: 5 }}>
                   <Typography
                     variant="h4"
                     sx={{
@@ -591,6 +594,7 @@ export const OnboardingPage: React.FC = () => {
                   <Typography variant="body1" sx={{ color: '#b0c4a0', maxWidth: 450, mx: 'auto' }}>
                     Herramientas poderosas para conectar con la naturaleza
                   </Typography>
+                  </Box>
                 </MotionDiv>
 
                 <Box
@@ -611,13 +615,15 @@ export const OnboardingPage: React.FC = () => {
                         delay: 0.2 + i * 0.15,
                         ease: [0.22, 1, 0.36, 1],
                       }}
-                      sx={{
-                        ...glassStyle,
-                        p: { xs: 2.5, sm: 3 },
-                        width: { xs: '100%', sm: 160 },
-                        textAlign: 'center',
-                      }}
                     >
+                      <Box
+                        sx={{
+                          ...glassStyle,
+                          p: { xs: 2.5, sm: 3 },
+                          width: { xs: '100%', sm: 160 },
+                          textAlign: 'center',
+                        }}
+                      >
                       <Box sx={{ color: feature.color, mb: 1.5 }}>{feature.icon}</Box>
                       <Typography
                         variant="subtitle1"
@@ -628,6 +634,7 @@ export const OnboardingPage: React.FC = () => {
                       <Typography variant="body2" sx={{ color: '#b0c4a0', fontSize: '0.8rem' }}>
                         {feature.desc}
                       </Typography>
+                      </Box>
                     </MotionDiv>
                   ))}
                 </Box>
@@ -641,8 +648,8 @@ export const OnboardingPage: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
-                  sx={{ mb: 5 }}
                 >
+                  <Box sx={{ mb: 5 }}>
                   <Typography
                     variant="h4"
                     sx={{
@@ -668,19 +675,22 @@ export const OnboardingPage: React.FC = () => {
                     Cada ave guarda historias de los pueblos Arhuaco, Kogui, Wiwa y Kankuamo.
                     Ayúdanos a preservar este conocimiento.
                   </Typography>
+                  </Box>
                 </MotionDiv>
 
                 <MotionDiv
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.3 }}
-                  sx={{
-                    display: 'flex',
-                    gap: 2,
-                    justifyContent: 'center',
-                    flexWrap: 'wrap',
-                  }}
                 >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: 2,
+                      justifyContent: 'center',
+                      flexWrap: 'wrap',
+                    }}
+                  >
                   <MotionDiv whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
                     <Button
                       variant="contained"
@@ -730,9 +740,11 @@ export const OnboardingPage: React.FC = () => {
                       Explorar como Invitado
                     </Button>
                   </MotionDiv>
+                  </Box>
                 </MotionDiv>
               </Box>
             )}
+            </Box>
           </MotionDiv>
         </AnimatePresence>
 
@@ -814,12 +826,15 @@ export const OnboardingPage: React.FC = () => {
                 background: i === slide ? '#D4A017' : 'rgba(255,255,255,0.25)',
               }}
               transition={{ duration: 0.3 }}
-              sx={{
-                height: 10,
-                borderRadius: 5,
-                cursor: 'pointer',
-              }}
-            />
+            >
+              <Box
+                sx={{
+                  height: 10,
+                  borderRadius: 5,
+                  cursor: 'pointer',
+                }}
+              />
+            </MotionDiv>
           ))}
         </Box>
       </Box>

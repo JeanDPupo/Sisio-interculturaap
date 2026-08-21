@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -14,6 +14,7 @@ import {
   Chip,
   IconButton,
   Stack,
+  styled,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -21,13 +22,64 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import ShareIcon from '@mui/icons-material/Share';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
-import ShieldIcon from '@mui/icons-material/Shield';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import SpaIcon from '@mui/icons-material/Spa';
 import { Bird, useAuth, useSightings } from '@sisio/shared';
 const ARViewer = React.lazy(() => import('./ARViewer').then(m => ({ default: m.ARViewer })));
 
 const MotionDiv = motion.div;
+
+const AnimatedProgressBar = styled(motion.div)({
+  height: '100%',
+  borderRadius: 6,
+  background: 'linear-gradient(90deg, #F44336, #FFC107, #4CAF50)',
+  position: 'relative',
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    right: 0,
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: 8,
+    height: 20,
+    borderRadius: '4px',
+    background: '#D4A017',
+    boxShadow: '0 0 12px rgba(212,160,23,0.8)',
+  },
+});
+
+const BIRD_PHOTOS: Record<string, string> = {
+  'aguila': '/assets/images/birds/aguila-real.jpg',
+  'colibr': '/assets/images/birds/colibri-garganta-roja.jpg',
+  'flamenco': '/assets/images/birds/flamenco-andino.jpg',
+  'loro': '/assets/images/birds/loro-verde.jpg',
+  'tucan': '/assets/images/birds/tucan-toco.jpg',
+  'turpial': '/assets/images/birds/turpial.jpg',
+};
+
+function normalize(str: string): string {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function getBirdPhoto(name: string): string | null {
+  const lower = normalize(name);
+  for (const [key, photo] of Object.entries(BIRD_PHOTOS)) {
+    if (lower.includes(key)) return photo;
+  }
+  return null;
+}
+
+const RISK_ICONS: Record<string, string> = {
+  bajo: '/assets/icons/risk/risk-low.svg',
+  medio: '/assets/icons/risk/risk-medium.svg',
+  alto: '/assets/icons/risk/risk-high.svg',
+};
+
+const FICHA_ICONS = {
+  feather: '/assets/icons/ficha/feather.svg',
+  cosmovision: '/assets/icons/ficha/cosmovision.svg',
+  habitat: '/assets/icons/ficha/habitat.svg',
+  migration: '/assets/icons/ficha/migration.svg',
+  audioCanto: '/assets/icons/ficha/audio-canto.svg',
+};
 
 interface Props {
   bird: Bird;
@@ -55,25 +107,23 @@ const riskBgMap: Record<string, string> = {
 };
 
 const FeatherIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" stroke="#D4A017" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <line x1="16" y1="8" x2="2" y2="22" stroke="#D4A017" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M17.5 15H9" stroke="#D4A017" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
+  <img src={FICHA_ICONS.feather} alt="Feather" style={{ width: 24, height: 24 }} />
 );
 
-const SunIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="5" stroke="#4CAF50" strokeWidth="2"/>
-    <line x1="12" y1="1" x2="12" y2="3" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="12" y1="21" x2="12" y2="23" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="1" y1="12" x2="3" y2="12" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="21" y1="12" x2="23" y2="12" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
+const CosmovisionIcon = () => (
+  <img src={FICHA_ICONS.cosmovision} alt="Cosmovisión" style={{ width: 24, height: 24 }} />
+);
+
+const HabitatIcon = () => (
+  <img src={FICHA_ICONS.habitat} alt="Hábitat" style={{ width: 24, height: 24 }} />
+);
+
+const MigrationIcon = () => (
+  <img src={FICHA_ICONS.migration} alt="Migración" style={{ width: 24, height: 24 }} />
+);
+
+const AudioCantoIcon = () => (
+  <img src={FICHA_ICONS.audioCanto} alt="Audio/Canto" style={{ width: 24, height: 24 }} />
 );
 
 const BookIcon = () => (
@@ -175,11 +225,8 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
   };
 
   const getRiskIcon = (risk: string) => {
-    switch (risk) {
-      case 'alto': return <ShieldIcon />;
-      case 'medio': return <WarningAmberIcon />;
-      default: return <SpaIcon />;
-    }
+    const src = RISK_ICONS[risk] || RISK_ICONS.bajo;
+    return <img src={src} alt={risk} style={{ width: 20, height: 20 }} />;
   };
 
   const expandAnimation = {
@@ -193,15 +240,17 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-        sx={{
-          position: 'relative',
-          width: '100%',
-          mb: 4,
-          borderRadius: '24px',
-          overflow: 'hidden',
-          maxHeight: 400,
-        }}
       >
+        <Box
+          sx={{
+            position: 'relative',
+            width: '100%',
+            mb: 4,
+            borderRadius: '24px',
+            overflow: 'hidden',
+            maxHeight: 400,
+          }}
+        >
         {bird.imagen_url ? (
           <Box
             component="img"
@@ -223,10 +272,22 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '8rem',
+              overflow: 'hidden',
             }}
           >
-            🦅
+            {(() => {
+              const photoSrc = getBirdPhoto(bird.nombre_espanol || '') || getBirdPhoto(bird.nombre_cientifico || '');
+              if (photoSrc) {
+                return (
+                  <img
+                    src={photoSrc}
+                    alt={bird.nombre_espanol || bird.nombre_cientifico}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                );
+              }
+              return <Typography sx={{ fontSize: '8rem' }}>🦅</Typography>;
+            })()}
           </Box>
         )}
         <Box
@@ -239,14 +300,15 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
             background: 'linear-gradient(transparent, rgba(13,27,15,0.95))',
           }}
         />
+        </Box>
       </MotionDiv>
 
       <MotionDiv
         initial={{ filter: 'blur(20px)', opacity: 0 }}
         animate={{ filter: 'blur(0px)', opacity: 1 }}
         transition={{ duration: 1, delay: 0.3 }}
-        sx={{ mb: 4 }}
       >
+        <Box sx={{ mb: 4 }}>
         <Typography
           variant="h3"
           sx={{
@@ -287,6 +349,7 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
             )}
           </Typography>
         )}
+        </Box>
       </MotionDiv>
 
       {showActions && confidence > 0 && (
@@ -294,8 +357,8 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.5 }}
-          sx={{ mb: 4 }}
         >
+          <Box sx={{ mb: 4 }}>
           <Paper sx={{ p: 3, ...glassmorphismStyle }}>
             <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: '#b0c4a0' }}>
               Señal del bosque - Precisión de identificación
@@ -311,28 +374,10 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
                     position: 'relative',
                   }}
                 >
-                  <MotionDiv
+                  <AnimatedProgressBar
                     initial={{ width: 0 }}
                     animate={{ width: `${confidence * 100}%` }}
                     transition={{ duration: 1.5, ease: 'easeOut', delay: 0.8 }}
-                    sx={{
-                      height: '100%',
-                      borderRadius: 6,
-                      background: `linear-gradient(90deg, #F44336, #FFC107, #4CAF50)`,
-                      position: 'relative',
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        right: 0,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        width: 8,
-                        height: 20,
-                        borderRadius: '4px',
-                        background: '#D4A017',
-                        boxShadow: '0 0 12px rgba(212,160,23,0.8)',
-                      },
-                    }}
                   />
                 </Box>
               </Box>
@@ -349,6 +394,7 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
               </Typography>
             </Box>
           </Paper>
+          </Box>
         </MotionDiv>
       )}
 
@@ -358,11 +404,13 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.6 }}
-            sx={{
-              ...glassmorphismStyle,
-              borderLeft: '4px solid #D4A017',
-            }}
           >
+            <Box
+              sx={{
+                ...glassmorphismStyle,
+                borderLeft: '4px solid #D4A017',
+              }}
+            >
             <CardActions
               onClick={() => toggleSection('significado')}
               sx={{ cursor: 'pointer', justifyContent: 'space-between' }}
@@ -389,6 +437,7 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
                 </Typography>
               </CardContent>
             </Collapse>
+            </Box>
           </MotionDiv>
         )}
 
@@ -397,17 +446,19 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.7 }}
-            sx={{
-              ...glassmorphismStyle,
-              borderLeft: '4px solid #4CAF50',
-            }}
           >
+            <Box
+              sx={{
+                ...glassmorphismStyle,
+                borderLeft: '4px solid #4CAF50',
+              }}
+            >
             <CardActions
               onClick={() => toggleSection('cosmovision')}
               sx={{ cursor: 'pointer', justifyContent: 'space-between' }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <SunIcon />
+                <CosmovisionIcon />
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#4CAF50' }}>
                   Rol en la Cosmovisión
                 </Typography>
@@ -428,6 +479,7 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
                 </Typography>
               </CardContent>
             </Collapse>
+            </Box>
           </MotionDiv>
         )}
 
@@ -436,11 +488,13 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.8 }}
-            sx={{
-              ...glassmorphismStyle,
-              borderLeft: '4px solid #64B5F6',
-            }}
           >
+            <Box
+              sx={{
+                ...glassmorphismStyle,
+                borderLeft: '4px solid #64B5F6',
+              }}
+            >
             <CardActions
               onClick={() => toggleSection('historias')}
               sx={{ cursor: 'pointer', justifyContent: 'space-between' }}
@@ -469,6 +523,7 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
                 ))}
               </CardContent>
             </Collapse>
+            </Box>
           </MotionDiv>
         )}
 
@@ -477,11 +532,13 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.9 }}
-            sx={{
-              ...glassmorphismStyle,
-              borderLeft: '4px solid #8BC34A',
-            }}
           >
+            <Box
+              sx={{
+                ...glassmorphismStyle,
+                borderLeft: '4px solid #8BC34A',
+              }}
+            >
             <CardActions
               onClick={() => toggleSection('comportamiento')}
               sx={{ cursor: 'pointer', justifyContent: 'space-between' }}
@@ -508,6 +565,7 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
                 </Typography>
               </CardContent>
             </Collapse>
+            </Box>
           </MotionDiv>
         )}
 
@@ -516,17 +574,19 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 1.0 }}
-            sx={{
-              ...glassmorphismStyle,
-              borderLeft: '4px solid #64B5F6',
-            }}
           >
+            <Box
+              sx={{
+                ...glassmorphismStyle,
+                borderLeft: '4px solid #64B5F6',
+              }}
+            >
             <CardActions
               onClick={() => toggleSection('habitat')}
               sx={{ cursor: 'pointer', justifyContent: 'space-between' }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <MountainIcon />
+                <HabitatIcon />
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#64B5F6' }}>
                   Hábitat
                 </Typography>
@@ -547,6 +607,7 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
                 </Typography>
               </CardContent>
             </Collapse>
+            </Box>
           </MotionDiv>
         )}
 
@@ -555,11 +616,13 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 1.1 }}
-            sx={{
-              ...glassmorphismStyle,
-              borderLeft: '4px solid #FF8F00',
-            }}
           >
+            <Box
+              sx={{
+                ...glassmorphismStyle,
+                borderLeft: '4px solid #FF8F00',
+              }}
+            >
             <CardActions
               onClick={() => toggleSection('zona')}
               sx={{ cursor: 'pointer', justifyContent: 'space-between' }}
@@ -586,6 +649,7 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
                 </Typography>
               </CardContent>
             </Collapse>
+            </Box>
           </MotionDiv>
         )}
 
@@ -593,14 +657,16 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 1.2 }}
-          sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: riskBgMap[bird.ecosistema_riesgo],
-            border: `1px solid ${riskColorMap[bird.ecosistema_riesgo]}40`,
-            textAlign: 'center',
-          }}
         >
+          <Box
+            sx={{
+              p: 3,
+              borderRadius: '16px',
+              background: riskBgMap[bird.ecosistema_riesgo],
+              border: `1px solid ${riskColorMap[bird.ecosistema_riesgo]}40`,
+              textAlign: 'center',
+            }}
+          >
           <Chip
             icon={getRiskIcon(bird.ecosistema_riesgo)}
             label={`Riesgo ecosistema: ${bird.ecosistema_riesgo.toUpperCase()}`}
@@ -612,6 +678,7 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
               '& .MuiChip-icon': { color: riskColorMap[bird.ecosistema_riesgo] },
             }}
           />
+          </Box>
         </MotionDiv>
       </Stack>
 
@@ -620,11 +687,12 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 1.3 }}
-          sx={{ mb: 4 }}
         >
+          <Box sx={{ mb: 4 }}>
           <Paper sx={{ p: 3, ...glassmorphismStyle }}>
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: '#D4A017' }}>
-              🔊 Audio del canto
+            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: '#D4A017', display: 'flex', alignItems: 'center', gap: 1 }}>
+              <img src={FICHA_ICONS.audioCanto} alt="Audio" style={{ width: 24, height: 24 }} />
+              Audio del canto
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <IconButton
@@ -659,6 +727,7 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
               </Box>
             </Box>
           </Paper>
+          </Box>
         </MotionDiv>
       )}
 
@@ -666,14 +735,17 @@ export const BirdDetailView: React.FC<Props> = ({ bird, confidence = 0, showActi
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 1.4 }}
-        sx={{ mb: 4 }}
       >
-        <Paper sx={{ p: 3, ...glassmorphismStyle }}>
-          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: '#D4A017', fontFamily: '"Playfair Display", serif' }}>
-            Visualizador 3D
-          </Typography>
-          <ARViewer bird={bird} />
-        </Paper>
+        <Box sx={{ mb: 4 }}>
+          <Paper sx={{ p: 3, ...glassmorphismStyle }}>
+            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: '#D4A017', fontFamily: '"Playfair Display", serif' }}>
+              Visualizador 3D
+            </Typography>
+            <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress size={30} sx={{ color: '#D4A017' }} /></Box>}>
+              <ARViewer bird={bird} />
+            </Suspense>
+          </Paper>
+        </Box>
       </MotionDiv>
 
       {showActions && (

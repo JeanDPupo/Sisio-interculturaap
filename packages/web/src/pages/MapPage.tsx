@@ -169,14 +169,17 @@ const LegendPanel: React.FC = () => (
     </Typography>
     <Stack spacing={1}>
       <Stack direction="row" spacing={1} alignItems="center">
+        <img src="/assets/icons/risk/risk-low.svg" alt="low" style={{ width: 14, height: 14 }} />
         <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: riesgoBajo, boxShadow: `0 0 6px ${riesgoBajo}` }} />
         <Typography variant="caption" sx={{ color: blancoNiebla }}>Riesgo Bajo</Typography>
       </Stack>
       <Stack direction="row" spacing={1} alignItems="center">
+        <img src="/assets/icons/risk/risk-medium.svg" alt="medium" style={{ width: 14, height: 14 }} />
         <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: riesgoMedio, boxShadow: `0 0 6px ${riesgoMedio}` }} />
         <Typography variant="caption" sx={{ color: blancoNiebla }}>Riesgo Medio</Typography>
       </Stack>
       <Stack direction="row" spacing={1} alignItems="center">
+        <img src="/assets/icons/risk/risk-high.svg" alt="high" style={{ width: 14, height: 14 }} />
         <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: riesgoAlto, boxShadow: `0 0 6px ${riesgoAlto}` }} />
         <Typography variant="caption" sx={{ color: blancoNiebla }}>Riesgo Alto</Typography>
       </Stack>

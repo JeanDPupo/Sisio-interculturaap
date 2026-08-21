@@ -59,10 +59,10 @@ interface SightingItem {
 }
 
 const badges = [
-  { key: 'novato', label: 'Novato', icon: '/assets/images/badges/novato.png', minSightings: 0 },
-  { key: 'observador', label: 'Observador', icon: '/assets/images/badges/observador.png', minSightings: 5 },
-  { key: 'sabio', label: 'Sabio', icon: '/assets/images/badges/sabio.png', minSightings: 15 },
-  { key: 'guardian', label: 'Guardián', icon: '/assets/images/badges/guardian.png', minSightings: 30 },
+  { key: 'novato', label: 'Novato', icon: '/assets/images/badges/badge-novato.svg', minSightings: 0 },
+  { key: 'observador', label: 'Observador', icon: '/assets/images/badges/badge-observador.svg', minSightings: 5 },
+  { key: 'sabio', label: 'Sabio', icon: '/assets/images/badges/badge-sabio.svg', minSightings: 15 },
+  { key: 'guardian', label: 'Guardián', icon: '/assets/images/badges/badge-guardian.svg', minSightings: 30 },
 ];
 
 const AnimatedCounter: React.FC<{ target: number; duration?: number }> = ({ target, duration = 1200 }) => {
@@ -488,7 +488,15 @@ const ProfilePage: React.FC = () => {
                           border: `2px solid ${earned ? oroIndigena : 'rgba(255,255,255,0.1)'}`,
                         }}
                       >
-                        <StarIcon sx={{ color: earned ? oroIndigena : 'rgba(255,255,255,0.2)', fontSize: 28 }} />
+                        <img
+                          src={badge.icon}
+                          alt={badge.label}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            filter: earned ? 'none' : 'grayscale(100%) opacity(0.3)',
+                          }}
+                        />
                       </Box>
                       <Typography variant="caption" sx={{ color: earned ? blancoNiebla : 'rgba(255,255,255,0.3)', fontWeight: 600, display: 'block' }}>
                         {badge.label}

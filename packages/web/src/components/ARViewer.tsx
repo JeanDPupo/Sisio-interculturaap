@@ -5,11 +5,59 @@ import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
-import { BirdScene } from '@sisio/shared/babylon';
-import { Bird } from '@sisio/shared';
+import { BirdScene, Bird } from '@sisio/shared';
 
 interface ARViewerProps {
   bird: Bird;
+}
+
+const BIRD_PHOTOS: Record<string, string> = {
+  'aguila': '/assets/images/birds/aguila-real.jpg',
+  'colibr': '/assets/images/birds/colibri-garganta-roja.jpg',
+  'flamenco': '/assets/images/birds/flamenco-andino.jpg',
+  'loro': '/assets/images/birds/loro-verde.jpg',
+  'tucan': '/assets/images/birds/tucan-toco.jpg',
+  'turpial': '/assets/images/birds/turpial.jpg',
+};
+
+const AR_PHOTOS: Record<string, string> = {
+  'turpial': '/assets/images/birds/turpial-ar.jpg',
+};
+
+const BIRD_3D_MODELS: Record<string, string> = {
+  'turpial': '/assets/models/turpial.glb',
+};
+
+function normalize(str: string): string {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function getARPhoto(name: string): string | null {
+  const lower = normalize(name);
+  for (const [key, photo] of Object.entries(AR_PHOTOS)) {
+    if (lower.includes(key)) return photo;
+  }
+  return null;
+}
+
+function get3DModel(name: string): string | null {
+  const lower = normalize(name);
+  for (const [key, model] of Object.entries(BIRD_3D_MODELS)) {
+    if (lower.includes(key)) return model;
+  }
+  return null;
+}
+
+function getBirdPhoto(name: string): string | null {
+  const lower = normalize(name);
+  for (const [key, photo] of Object.entries(BIRD_PHOTOS)) {
+    if (lower.includes(key)) return photo;
+  }
+  return null;
+}
+
+function getARFallback(name: string): string | null {
+  return getARPhoto(name) || getBirdPhoto(name);
 }
 
 export const ARViewer: React.FC<ARViewerProps> = ({ bird }) => {
@@ -64,21 +112,33 @@ export const ARViewer: React.FC<ARViewerProps> = ({ bird }) => {
   };
 
   const handleSnapshot = async () => {
-    const blob = await sceneRef.current?.takeSnapshot();
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sisio-${bird.nombre_cientifico}-ar.png`;
-      a.click();
-      URL.revokeObjectURL(url);
+    if (!sceneRef.current) return;
+    try {
+      const blob = await sceneRef.current.takeSnapshot();
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sisio-${bird.nombre_cientifico}-ar.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.warn('Snapshot failed:', err);
     }
   };
 
-  if (error) {
+  const photo = getARFallback(bird.nombre_cientifico || '') || getARFallback(bird.nombre_espanol || '');
+
+  if (error || !sceneRef.current) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center', bgcolor: '#ffebee', borderRadius: 2 }}>
-        <div style={{ color: '#c62828' }}>Error: {error}</div>
+      <Box sx={{ p: 2, textAlign: 'center', borderRadius: 3, overflow: 'hidden', background: 'rgba(255,255,255,0.03)' }}>
+        {photo ? (
+          <img src={photo} alt={bird.nombre_espanol || bird.nombre_cientifico} style={{ width: '100%', maxHeight: 300, objectFit: 'cover', borderRadius: 12 }} />
+        ) : (
+          <div style={{ fontSize: 80, padding: 20 }}>🦅</div>
+        )}
+        <div style={{ color: '#b0c4a0', marginTop: 8, fontSize: 14 }}>Visualizador 3D no disponible</div>
       </Box>
     );
   }

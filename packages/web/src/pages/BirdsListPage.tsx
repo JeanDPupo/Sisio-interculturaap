@@ -11,12 +11,44 @@ import {
   InputAdornment,
   Chip,
   Skeleton,
+  styled,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBird, Bird } from '@sisio/shared';
 
 const MotionDiv = motion.div;
+
+const BIRD_PHOTOS: Record<string, string> = {
+  'aguila': '/assets/images/birds/aguila-real.jpg',
+  'colibr': '/assets/images/birds/colibri-garganta-roja.jpg',
+  'flamenco': '/assets/images/birds/flamenco-andino.jpg',
+  'loro': '/assets/images/birds/loro-verde.jpg',
+  'tucan': '/assets/images/birds/tucan-toco.jpg',
+  'turpial': '/assets/images/birds/turpial.jpg',
+};
+
+const AR_PHOTOS: Record<string, string> = {
+  'turpial': '/assets/images/birds/turpial-ar.jpg',
+};
+
+function normalize(str: string): string {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function getBirdPhoto(name: string): string | null {
+  const lower = normalize(name);
+  for (const [key, photo] of Object.entries(BIRD_PHOTOS)) {
+    if (lower.includes(key)) return photo;
+  }
+  return null;
+}
+
+const RISK_ICONS: Record<string, string> = {
+  bajo: '/assets/icons/risk/risk-low.svg',
+  medio: '/assets/icons/risk/risk-medium.svg',
+  alto: '/assets/icons/risk/risk-high.svg',
+};
 
 const glassmorphismStyle = {
   backdropFilter: 'blur(20px)',
@@ -120,11 +152,8 @@ export const BirdsListPage: React.FC = () => {
   };
 
   const getRiskIcon = (risk: string) => {
-    switch (risk) {
-      case 'alto': return '🛡️';
-      case 'medio': return '⚠️';
-      default: return '🍃';
-    }
+    const src = RISK_ICONS[risk] || RISK_ICONS.bajo;
+    return <img src={src} alt={risk} style={{ width: 16, height: 16, verticalAlign: 'middle' }} />;
   };
 
   return (
@@ -177,19 +206,29 @@ export const BirdsListPage: React.FC = () => {
           {(['bajo', 'medio', 'alto'] as const).map((risk) => (
             <MotionDiv
               key={risk}
-              label={`${getRiskIcon(risk)} ${risk.charAt(0).toUpperCase() + risk.slice(1)}`}
               onClick={() => setRiskFilter(riskFilter === risk ? null : risk)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              sx={{
-                borderRadius: '12px',
-                fontWeight: 600,
-                color: riskFilter === risk ? '#0D1B0F' : riskColorMap[risk],
-                background: riskFilter === risk ? riskColorMap[risk] : riskBgMap[risk],
-                border: `1px solid ${riskColorMap[risk]}40`,
-                transition: 'all 0.3s ease',
-              }}
-            />
+            >
+              <Box
+                sx={{
+                  borderRadius: '12px',
+                  fontWeight: 600,
+                  color: riskFilter === risk ? '#0D1B0F' : riskColorMap[risk],
+                  background: riskFilter === risk ? riskColorMap[risk] : riskBgMap[risk],
+                  border: `1px solid ${riskColorMap[risk]}40`,
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1.5,
+                  py: 0.5,
+                }}
+              >
+                <img src={RISK_ICONS[risk]} alt={risk} style={{ width: 16, height: 16 }} />
+                {risk.charAt(0).toUpperCase() + risk.slice(1)}
+              </Box>
+            </MotionDiv>
           ))}
 
           <Box sx={{ width: 1, height: 0 }} />
@@ -197,35 +236,47 @@ export const BirdsListPage: React.FC = () => {
           {habitats.map((habitat) => (
             <MotionDiv
               key={habitat}
-              label={habitat}
               onClick={() => setHabitatFilter(habitatFilter === habitat ? null : habitat)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              sx={{
-                borderRadius: '12px',
-                fontWeight: 500,
-                color: habitatFilter === habitat ? '#0D1B0F' : '#64B5F6',
-                background: habitatFilter === habitat ? '#64B5F6' : 'rgba(100,181,246,0.12)',
-                border: '1px solid rgba(100,181,246,0.3)',
-                transition: 'all 0.3s ease',
-              }}
-            />
+            >
+              <Box
+                sx={{
+                  borderRadius: '12px',
+                  fontWeight: 500,
+                  color: habitatFilter === habitat ? '#0D1B0F' : '#64B5F6',
+                  background: habitatFilter === habitat ? '#64B5F6' : 'rgba(100,181,246,0.12)',
+                  border: '1px solid rgba(100,181,246,0.3)',
+                  transition: 'all 0.3s ease',
+                  px: 1.5,
+                  py: 0.5,
+                }}
+              >
+                {habitat}
+              </Box>
+            </MotionDiv>
           ))}
 
-          <MotionDiv
-            label={migratoryFilter === true ? '🐦 Migratoria' : '🐦 No migratoria'}
-            onClick={() => setMigratoryFilter(migratoryFilter === true ? null : true)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            sx={{
-              borderRadius: '12px',
-              fontWeight: 500,
-              color: migratoryFilter === true ? '#0D1B0F' : '#8BC34A',
-              background: migratoryFilter === true ? '#8BC34A' : 'rgba(139,195,74,0.12)',
-              border: '1px solid rgba(139,195,74,0.3)',
-              transition: 'all 0.3s ease',
-            }}
-          />
+            <MotionDiv
+              onClick={() => setMigratoryFilter(migratoryFilter === true ? null : true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Box
+                sx={{
+                  borderRadius: '12px',
+                  fontWeight: 500,
+                  color: migratoryFilter === true ? '#0D1B0F' : '#8BC34A',
+                  background: migratoryFilter === true ? '#8BC34A' : 'rgba(139,195,74,0.12)',
+                  border: '1px solid rgba(139,195,74,0.3)',
+                  transition: 'all 0.3s ease',
+                  px: 1.5,
+                  py: 0.5,
+                }}
+              >
+                {migratoryFilter === true ? 'Migratoria' : 'No migratoria'}
+              </Box>
+            </MotionDiv>
         </Box>
 
         {loading ? (
@@ -256,23 +307,28 @@ export const BirdsListPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            sx={{
-              textAlign: 'center',
-              py: 10,
-              ...glassmorphismStyle,
-              mx: 'auto',
-              maxWidth: 400,
-            }}
           >
-            <Typography variant="h1" sx={{ fontSize: '5rem', mb: 2 }}>
-              🦅
-            </Typography>
-            <Typography variant="h6" sx={{ color: '#b0c4a0', mb: 1 }}>
+            <Box
+              sx={{
+                textAlign: 'center',
+                py: 10,
+                ...glassmorphismStyle,
+                mx: 'auto',
+                maxWidth: 400,
+              }}
+            >
+            <img
+              src="/assets/images/empty-states/no-results.jpg"
+              alt="No results"
+              style={{ maxWidth: 200, margin: '0 auto', display: 'block', borderRadius: 12 }}
+            />
+            <Typography variant="h6" sx={{ color: '#b0c4a0', mb: 1, mt: 2 }}>
               No se encontraron aves
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)' }}>
               Intenta con otros filtros o términos de búsqueda
             </Typography>
+            </Box>
           </MotionDiv>
         ) : (
           <AnimatePresence mode="wait">
@@ -294,30 +350,32 @@ export const BirdsListPage: React.FC = () => {
                         boxShadow: '0 0 20px rgba(212,160,23,0.2), 0 8px 32px rgba(0,0,0,0.3)',
                       }}
                       transition={{ duration: 0.3 }}
-                      sx={{
-                        ...glassmorphismStyle,
-                        cursor: 'pointer',
-                        overflow: 'hidden',
-                        position: 'relative',
-                        '&::after': {
-                          content: '""',
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          background: 'linear-gradient(90deg, transparent, rgba(212,160,23,0.08), transparent)',
-                          backgroundSize: '200% 100%',
-                          opacity: 0,
-                          transition: 'opacity 0.3s ease',
-                          pointerEvents: 'none',
-                        },
-                        '&:hover::after': {
-                          opacity: 1,
-                          animation: 'shimmerGold 1.5s ease-in-out infinite',
-                        },
-                      }}
                     >
+                      <Box
+                        sx={{
+                          ...glassmorphismStyle,
+                          cursor: 'pointer',
+                          overflow: 'hidden',
+                          position: 'relative',
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'linear-gradient(90deg, transparent, rgba(212,160,23,0.08), transparent)',
+                            backgroundSize: '200% 100%',
+                            opacity: 0,
+                            transition: 'opacity 0.3s ease',
+                            pointerEvents: 'none',
+                          },
+                          '&:hover::after': {
+                            opacity: 1,
+                            animation: 'shimmerGold 1.5s ease-in-out infinite',
+                          },
+                        }}
+                      >
                       <CardActionArea onClick={() => navigate(`/bird/${bird.id}`)}>
                         <Box
                           sx={{
@@ -345,7 +403,19 @@ export const BirdsListPage: React.FC = () => {
                               }}
                             />
                           ) : (
-                            <Typography sx={{ fontSize: '4rem' }}>🦅</Typography>
+                            (() => {
+                              const photoSrc = getBirdPhoto(bird.nombre_espanol || '') || getBirdPhoto(bird.nombre_cientifico || '');
+                              if (photoSrc) {
+                                return (
+                                  <img
+                                    src={photoSrc}
+                                    alt={bird.nombre_espanol || bird.nombre_cientifico}
+                                    style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 12 }}
+                                  />
+                                );
+                              }
+                              return <Typography sx={{ fontSize: '4rem' }}>🦅</Typography>;
+                            })()
                           )}
                         </Box>
                         <CardContent sx={{ p: 2.5 }}>
@@ -394,7 +464,8 @@ export const BirdsListPage: React.FC = () => {
                           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                             <Chip
                               size="small"
-                              label={`${getRiskIcon(bird.ecosistema_riesgo)} ${bird.ecosistema_riesgo}`}
+                              icon={<img src={RISK_ICONS[bird.ecosistema_riesgo] || RISK_ICONS.bajo} alt={bird.ecosistema_riesgo} style={{ width: 14, height: 14 }} />}
+                              label={bird.ecosistema_riesgo}
                               sx={{
                                 fontWeight: 600,
                                 borderRadius: '8px',
@@ -420,6 +491,7 @@ export const BirdsListPage: React.FC = () => {
                           </Box>
                         </CardContent>
                       </CardActionArea>
+                      </Box>
                     </MotionDiv>
                   </Grid>
                 ))}

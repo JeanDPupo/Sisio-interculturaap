@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Typography, Button, Box, Paper, Chip } from '@mui/material';
+import { Container, Typography, Button, Box, Paper, Chip, styled } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
@@ -10,11 +10,51 @@ import { BirdDetailView } from '../components/BirdDetailView';
 
 const MotionDiv = motion.div;
 
+const AnimatedProgressBar = styled(motion.div)({
+  height: '100%',
+  borderRadius: 6,
+  background: 'linear-gradient(90deg, #F44336, #FFC107, #4CAF50)',
+  position: 'relative',
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    right: 0,
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: 8,
+    height: 20,
+    borderRadius: '4px',
+    background: '#D4A017',
+    boxShadow: '0 0 12px rgba(212,160,23,0.8)',
+  },
+});
+
+const GlowBg = styled(motion.div)({
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 300,
+  height: 300,
+  borderRadius: '50%',
+  background: 'radial-gradient(circle, rgba(212,160,23,0.3), transparent 70%)',
+  filter: 'blur(40px)',
+  pointerEvents: 'none',
+});
+
 const glassmorphismStyle = {
   backdropFilter: 'blur(20px)',
   background: 'rgba(255,255,255,0.06)',
   border: '1px solid rgba(255,255,255,0.12)',
   borderRadius: '20px',
+};
+
+const BIRD_PHOTOS: Record<string, string> = {
+  'aguila real': '/assets/images/birds/aguila-real.jpg',
+  'colibrí de garganta roja': '/assets/images/birds/colibri-garganta-roja.jpg',
+  'flamenco andino': '/assets/images/birds/flamenco-andino.jpg',
+  'loro verde': '/assets/images/birds/loro-verde.jpg',
+  'tucán toco': '/assets/images/birds/tucan-toco.jpg',
 };
 
 const riskColorMap: Record<string, string> = {
@@ -79,12 +119,14 @@ export const BirdResultPage: React.FC = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          sx={{
-            textAlign: 'center',
-            ...glassmorphismStyle,
-            p: 6,
-          }}
         >
+          <Box
+            sx={{
+              textAlign: 'center',
+              ...glassmorphismStyle,
+              p: 6,
+            }}
+          >
           <Box
             sx={{
               width: 200,
@@ -154,6 +196,7 @@ export const BirdResultPage: React.FC = () => {
           >
             Volver al inicio
           </Button>
+          </Box>
         </MotionDiv>
       </Container>
     );
@@ -166,41 +209,31 @@ export const BirdResultPage: React.FC = () => {
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
-          sx={{ position: 'relative', mb: 4 }}
         >
-          <MotionDiv
+          <Box sx={{ position: 'relative', mb: 4 }}>
+          <GlowBg
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1.5, delay: 0.3 }}
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 300,
-              height: 300,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(212,160,23,0.3), transparent 70%)',
-              filter: 'blur(40px)',
-              pointerEvents: 'none',
-            }}
           />
 
           <MotionDiv
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            sx={{
-              position: 'relative',
-              width: 180,
-              height: 180,
-              mx: 'auto',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              border: '4px solid rgba(212,160,23,0.4)',
-              boxShadow: '0 0 40px rgba(212,160,23,0.3)',
-            }}
           >
+            <Box
+              sx={{
+                position: 'relative',
+                width: 180,
+                height: 180,
+                mx: 'auto',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '4px solid rgba(212,160,23,0.4)',
+                boxShadow: '0 0 40px rgba(212,160,23,0.3)',
+              }}
+            >
             {bird.imagen_url ? (
               <Box
                 component="img"
@@ -221,21 +254,36 @@ export const BirdResultPage: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '5rem',
+                  overflow: 'hidden',
                 }}
               >
-                🦅
+                {(() => {
+                  const birdName = (bird.nombre_espanol || '').toLowerCase();
+                  const photoSrc = BIRD_PHOTOS[birdName];
+                  if (photoSrc) {
+                    return (
+                      <img
+                        src={photoSrc}
+                        alt={bird.nombre_espanol || bird.nombre_cientifico}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    );
+                  }
+                  return <Typography sx={{ fontSize: '5rem' }}>🦅</Typography>;
+                })()}
               </Box>
             )}
+            </Box>
           </MotionDiv>
+          </Box>
         </MotionDiv>
 
         <MotionDiv
           initial={{ filter: 'blur(20px)', opacity: 0 }}
           animate={{ filter: 'blur(0px)', opacity: 1 }}
           transition={{ duration: 1, delay: 0.5 }}
-          sx={{ textAlign: 'center', mb: 4 }}
         >
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
           <Typography
             variant="h4"
             sx={{
@@ -274,6 +322,7 @@ export const BirdResultPage: React.FC = () => {
               )}
             </Typography>
           )}
+          </Box>
         </MotionDiv>
 
         {confidence > 0 && (
@@ -281,8 +330,8 @@ export const BirdResultPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.8 }}
-            sx={{ mb: 4 }}
           >
+            <Box sx={{ mb: 4 }}>
             <Paper sx={{ p: 3, ...glassmorphismStyle }}>
               <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: '#b0c4a0' }}>
                 Señal del bosque - Precisión de identificación
@@ -298,28 +347,10 @@ export const BirdResultPage: React.FC = () => {
                       position: 'relative',
                     }}
                   >
-                    <MotionDiv
+                    <AnimatedProgressBar
                       initial={{ width: 0 }}
                       animate={{ width: `${confidence * 100}%` }}
                       transition={{ duration: 1.5, ease: 'easeOut', delay: 1 }}
-                      sx={{
-                        height: '100%',
-                        borderRadius: 6,
-                        background: 'linear-gradient(90deg, #F44336, #FFC107, #4CAF50)',
-                        position: 'relative',
-                        '&::after': {
-                          content: '""',
-                          position: 'absolute',
-                          right: 0,
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          width: 8,
-                          height: 20,
-                          borderRadius: '4px',
-                          background: '#D4A017',
-                          boxShadow: '0 0 12px rgba(212,160,23,0.8)',
-                        },
-                      }}
                     />
                   </Box>
                 </Box>
@@ -336,6 +367,7 @@ export const BirdResultPage: React.FC = () => {
                 </Typography>
               </Box>
             </Paper>
+            </Box>
           </MotionDiv>
         )}
 
@@ -343,8 +375,8 @@ export const BirdResultPage: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1 }}
-          sx={{ mb: 4 }}
         >
+          <Box sx={{ mb: 4 }}>
           <Box sx={{
             p: 2,
             borderRadius: '12px',
@@ -365,6 +397,7 @@ export const BirdResultPage: React.FC = () => {
           </Box>
 
           <BirdDetailView bird={bird} confidence={confidence} />
+          </Box>
         </MotionDiv>
 
         <MotionDiv
@@ -436,6 +469,7 @@ export const BirdResultPage: React.FC = () => {
               Compartir
             </Button>
           </Box>
+          </Box>
         </MotionDiv>
 
         <AnimatePresence>
@@ -445,15 +479,18 @@ export const BirdResultPage: React.FC = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.9 }}
               transition={{ duration: 0.3 }}
-              sx={{
-                mt: 3,
-                p: 3,
-                ...glassmorphismStyle,
-              }}
             >
+              <Box
+                sx={{
+                  mt: 3,
+                  p: 3,
+                  ...glassmorphismStyle,
+                }}
+              >
               <Typography variant="body2" sx={{ color: '#b0c4a0', textAlign: 'center' }}>
                 Enlace copiado al portapapeles
               </Typography>
+              </Box>
             </MotionDiv>
           )}
         </AnimatePresence>

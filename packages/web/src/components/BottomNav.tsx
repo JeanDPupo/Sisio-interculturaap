@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Box, IconButton, Typography, Badge } from '@mui/material';
+import { Box, IconButton, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 
 const navItems = [
-  { label: 'Inicio', path: '/', icon: '🏠' },
-  { label: 'Aves', path: '/birds', icon: '🦅' },
-  { label: 'Mapa', path: '/map', icon: '🗺️' },
-  { label: 'Perfil', path: '/profile', icon: '👤' },
+  { label: 'Inicio', path: '/', icon: '/assets/icons/nav/home.svg' },
+  { label: 'Aves', path: '/birds', icon: '/assets/icons/nav/catalog.svg' },
+  { label: 'Mapa', path: '/map', icon: '/assets/icons/nav/map.svg' },
+  { label: 'Perfil', path: '/profile', icon: '/assets/icons/nav/profile.svg' },
 ];
 
 export const BottomNav: React.FC = () => {
@@ -54,8 +54,8 @@ export const BottomNav: React.FC = () => {
                 transition: 'color 0.2s',
               }}
             >
-              <Typography sx={{ fontSize: 22, lineHeight: 1 }}>{item.icon}</Typography>
-              <Typography sx={{ fontSize: 10, fontWeight: isActive ? 700 : 500 }}>{item.label}</Typography>
+              <img src={item.icon} alt={item.label} style={{ width: 22, height: 22 }} />
+              <Typography sx={{ fontSize: 10, fontWeight: isActive ? 700 : 500, color: 'inherit' }}>{item.label}</Typography>
             </IconButton>
           </motion.div>
         );
@@ -80,7 +80,7 @@ export const BottomNav: React.FC = () => {
               },
             }}
           >
-            📷
+            <img src="/assets/icons/nav/camera.svg" alt="Camera" style={{ width: 26, height: 26 }} />
           </IconButton>
         </motion.div>
       </Box>
@@ -106,8 +106,8 @@ export const BottomNav: React.FC = () => {
                 transition: 'color 0.2s',
               }}
             >
-              <Typography sx={{ fontSize: 22, lineHeight: 1 }}>{item.icon}</Typography>
-              <Typography sx={{ fontSize: 10, fontWeight: isActive ? 700 : 500 }}>{item.label}</Typography>
+              <img src={item.icon} alt={item.label} style={{ width: 22, height: 22 }} />
+              <Typography sx={{ fontSize: 10, fontWeight: isActive ? 700 : 500, color: 'inherit' }}>{item.label}</Typography>
             </IconButton>
           </motion.div>
         );
