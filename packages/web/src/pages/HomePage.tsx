@@ -365,7 +365,7 @@ export const HomePage: React.FC = () => {
             <Paper
               sx={{
                 ...glassStyle,
-                p: { xs: 3, sm: 4 },
+                p: { xs: 3.5, sm: 4.5 },
                 position: 'relative',
                 overflow: 'hidden',
                 '&::before': {
